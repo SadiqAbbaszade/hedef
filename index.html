@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hedef Takip Sistemi</title>
+  <style>
+    :root {
+      --bg-dark: #1B3C53;
+      --bg-medium: #456882;
+      --accent: #D2C1B6;
+      --text-light: #f9f9f9;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-light);
+      margin: 0;
+      padding: 40px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    h1 {
+      font-size: 2.8rem;
+      margin-bottom: 40px;
+      color: var(--accent);
+      text-align: center;
+    }
+    #cards {
+      width: 700px;
+      max-width: 95vw;
+    }
+    .card {
+      background: var(--bg-medium);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin: 16px 0;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+    }
+    .progress {
+      height: 22px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .progress-bar {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.5s;
+    }
+    input, button {
+      padding: 12px 16px;
+      font-size: 16px;
+      margin-top: 16px;
+      border: none;
+      border-radius: 10px;
+      box-sizing: border-box;
+    }
+    input {
+      flex: 1;
+      margin-right: 12px;
+    }
+    button {
+      background-color: var(--accent);
+      color: var(--bg-dark);
+      cursor: pointer;
+      font-weight: 700;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #bdaea2;
+    }
+    .btn-red {
+      background-color: #ff5e57;
+    }
+    .btn-red:hover {
+      background-color: #e0483d;
+    }
+    #admin-login {
+      margin-top: 32px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    #logout-btn {
+      margin-top: 32px;
+      background-color: #ff5e57;
+      color: white;
+      font-weight: 700;
+      padding: 12px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      display: none;
+    }
+    #logout-btn:hover {
+      background-color: #e0483d;
+    }
+    .footer {
+      margin-top: 60px;
+      font-size: 13px;
+      color: #bbb;
+      text-align: center;
+      max-width: 700px;
+    }
+    /* Responsive */
+    @media (max-width: 750px) {
+      #cards {
+        width: 100%;
+      }
+      body {
+        padding: 30px 15px;
+      }
+      input, button {
+        font-size: 14px;
+        padding: 10px 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>💸 Hedef Takip Sistemi</h1>
+
+  <div id="cards"></div>
+
+  <div id="admin-login">
+    <input type="password" id="admin-pass" placeholder="Admin şifrəsi" />
+    <button id="admin-btn">Giriş</button>
+  </div>
+
+  <button id="logout-btn">Çıxış</button>
+
+  <div class="footer">© 2025 Hedef Takip Sistemi</div>
+
+  <script>
+    const users = [
+      { name: "Sadiq", goal: 8000 },
+      { name: "Cavid", goal: 10000 }
+    ];
+
+    let data = JSON.parse(localStorage.getItem("hedefData")) || {
+      Sadiq: 0,
+      Cavid: 0
+    };
+
+    let isAdmin = false;
+
+    function saveData() {
+      localStorage.setItem("hedefData", JSON.stringify(data));
+    }
+
+    function render() {
+      const container = document.getElementById("cards");
+      container.innerHTML = "";
+      users.forEach(user => {
+        const current = data[user.name] || 0;
+        const percent = Math.min((current / user.goal) * 100, 100).toFixed(1);
+
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h2>${user.name} - Hedef: ${user.goal}₼</h2>
+          <div class="progress">
+            <div class="progress-bar" style="width: ${percent}%"></div>
+          </div>
+          <p>Toplam: ${current}₼ (${percent}%)</p>
+        `;
+
+        if (isAdmin) {
+          const input = document.createElement("input");
+          input.placeholder = "Məbləğ";
+          input.type = "number";
+          input.min = "0";
+
+          const btnAdd = document.createElement("button");
+          btnAdd.innerText = "Əlavə et";
+          btnAdd.onclick = () => {
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val > 0) {
+              data[user.name] += val;
+              saveData();
+              render();
+            }
+          };
+
+          const btnRemove = document.createElement("button");
+          btnRemove.innerText = "Çıxart";
+          btnRemove.className = "btn-red";
+          btnRemove.onclick = () => {
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val > 0) {
+              data[user.name] = Math.max(0, data[user.name] - val);
+              saveData();
+              render();
+            }
+          };
+
+          const wrapper = document.createElement("div");
+          wrapper.style.display = "flex";
+          wrapper.style.gap = "12px";
+          wrapper.appendChild(input);
+          wrapper.appendChild(btnAdd);
+          wrapper.appendChild(btnRemove);
+
+          card.appendChild(wrapper);
+        }
+
+        container.appendChild(card);
+      });
+    }
+
+    document.getElementById("admin-btn").addEventListener("click", () => {
+      const pass = document.getElementById("admin-pass").value.trim();
+      if (pass === "admin123") {
+        isAdmin = true;
+        document.getElementById("admin-login").style.display = "none";
+        document.getElementById("logout-btn").style.display = "inline-block";
+        render();
+      } else {
+        alert("Şifrə yanlışdır");
+      }
+    });
+
+    document.getElementById("logout-btn").addEventListener("click", () => {
+      isAdmin = false;
+      document.getElementById("admin-login").style.display = "flex";
+      document.getElementById("logout-btn").style.display = "none";
+      render();
+    });
+
+    render();
+  </script>
+
+</body>
+</html>

@@ -27,10 +27,20 @@
       margin-bottom: 40px;
       color: var(--accent);
       text-align: center;
+      width: 100%;
     }
+
+    #main-container {
+      display: flex;
+      gap: 40px;
+      width: 100%;
+      max-width: 1200px;
+      box-sizing: border-box;
+    }
+
     #cards {
-      width: 700px;
-      max-width: 95vw;
+      flex: 1;
+      max-width: 600px;
     }
     .card {
       background: var(--bg-medium);
@@ -89,6 +99,9 @@
       gap: 12px;
       flex-wrap: wrap;
       justify-content: center;
+      width: 100%;
+      max-width: 1200px;
+      box-sizing: border-box;
     }
     #logout-btn {
       margin-top: 32px;
@@ -111,10 +124,64 @@
       text-align: center;
       max-width: 700px;
     }
+
+    /* Tarihçe bölümü */
+    #history {
+      flex: 0.8;
+      background: var(--bg-medium);
+      border-radius: 16px;
+      padding: 24px 28px;
+      max-height: 480px;
+      overflow-y: auto;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      font-size: 14px;
+    }
+    #history h3 {
+      margin-top: 0;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .history-item {
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      position: relative;
+      transition: background-color 0.3s;
+    }
+    .history-item:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    .history-item .desc {
+      display: none;
+      margin-top: 6px;
+      font-style: italic;
+      color: #ddd;
+    }
+    .history-item.show-desc .desc {
+      display: block;
+    }
+    .history-item .type-add {
+      color: #7edd7e; /* yeşil */
+      font-weight: 700;
+    }
+    .history-item .type-remove {
+      color: #ff7f7f; /* kırmızı */
+      font-weight: 700;
+    }
+
     /* Responsive */
-    @media (max-width: 750px) {
+    @media (max-width: 900px) {
+      #main-container {
+        flex-direction: column;
+      }
+      #history {
+        max-height: 300px;
+        margin-top: 30px;
+      }
       #cards {
-        width: 100%;
+        max-width: 100%;
       }
       body {
         padding: 30px 15px;
@@ -130,7 +197,16 @@
 
   <h1>💸 Hedef Takip Sistemi</h1>
 
-  <div id="cards"></div>
+  <div id="main-container">
+    <div id="cards"></div>
+
+    <div id="history">
+      <h3>📜 İşlem Tarihçesi</h3>
+      <div id="history-list">
+        <!-- Tarihçe buraya gelecek -->
+      </div>
+    </div>
+  </div>
 
   <div id="admin-login">
     <input type="password" id="admin-pass" placeholder="Admin şifrəsi" />
@@ -144,18 +220,29 @@
   <script>
     const users = [
       { name: "Sadiq", goal: 8000 },
-      { name: "Cavid", goal: 20000 }
+      { name: "Cavid", goal: 10000 }
     ];
 
+    // Veri ve işlem tarihçesi localStorage'da saklanacak
     let data = JSON.parse(localStorage.getItem("hedefData")) || {
       Sadiq: 0,
       Cavid: 0
     };
 
+    let history = JSON.parse(localStorage.getItem("hedefHistory")) || [];
+
     let isAdmin = false;
 
     function saveData() {
       localStorage.setItem("hedefData", JSON.stringify(data));
+    }
+
+    function saveHistory() {
+      localStorage.setItem("hedefHistory", JSON.stringify(history));
+    }
+
+    function formatDate(date) {
+      return date.toLocaleDateString('tr-TR') + " " + date.toLocaleTimeString('tr-TR');
     }
 
     function render() {
@@ -180,15 +267,38 @@
           input.placeholder = "Məbləğ";
           input.type = "number";
           input.min = "0";
+          input.style.flex = "1";
+
+          const descInput = document.createElement("input");
+          descInput.placeholder = "Açıklama (zorunlu)";
+          descInput.type = "text";
+          descInput.style.flex = "2";
+          descInput.style.marginLeft = "12px";
 
           const btnAdd = document.createElement("button");
           btnAdd.innerText = "Əlavə et";
           btnAdd.onclick = () => {
             const val = parseFloat(input.value);
+            const desc = descInput.value.trim();
+            if (!desc) {
+              alert("Lütfen açıklama giriniz!");
+              return;
+            }
             if (!isNaN(val) && val > 0) {
               data[user.name] += val;
+              // İşlem tarihçesine ekle
+              history.unshift({
+                user: user.name,
+                type: "add",
+                amount: val,
+                desc,
+                date: new Date().toISOString()
+              });
               saveData();
+              saveHistory();
               render();
+            } else {
+              alert("Geçerli bir miktar giriniz!");
             }
           };
 
@@ -197,17 +307,35 @@
           btnRemove.className = "btn-red";
           btnRemove.onclick = () => {
             const val = parseFloat(input.value);
+            const desc = descInput.value.trim();
+            if (!desc) {
+              alert("Lütfen açıklama giriniz!");
+              return;
+            }
             if (!isNaN(val) && val > 0) {
               data[user.name] = Math.max(0, data[user.name] - val);
+              // İşlem tarihçesine ekle
+              history.unshift({
+                user: user.name,
+                type: "remove",
+                amount: val,
+                desc,
+                date: new Date().toISOString()
+              });
               saveData();
+              saveHistory();
               render();
+            } else {
+              alert("Geçerli bir miktar giriniz!");
             }
           };
 
           const wrapper = document.createElement("div");
           wrapper.style.display = "flex";
           wrapper.style.gap = "12px";
+          wrapper.style.marginTop = "16px";
           wrapper.appendChild(input);
+          wrapper.appendChild(descInput);
           wrapper.appendChild(btnAdd);
           wrapper.appendChild(btnRemove);
 
@@ -215,6 +343,41 @@
         }
 
         container.appendChild(card);
+      });
+
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const historyList = document.getElementById("history-list");
+      historyList.innerHTML = "";
+
+      if (history.length === 0) {
+        historyList.innerHTML = "<p>Henüz işlem yapılmadı.</p>";
+        return;
+      }
+
+      history.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `
+          <div>
+            <strong>${item.user}</strong> - 
+            <span class="${item.type === "add" ? "type-add" : "type-remove"}">
+              ${item.type === "add" ? "Əlavə edildi" : "Çıxarıldı"}
+            </span> - 
+            ${item.amount}₼
+          </div>
+          <div>${formatDate(new Date(item.date))}</div>
+          <div class="desc">${item.desc}</div>
+        `;
+
+        // Tıklayınca açıklamayı göster/gizle
+        div.addEventListener("click", () => {
+          div.classList.toggle("show-desc");
+        });
+
+        historyList.appendChild(div);
       });
     }
 

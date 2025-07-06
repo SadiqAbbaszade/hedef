@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Hedef Takip Sistemi</title>
-  <style>
+    <style>
     :root {
       --bg-dark: #1B3C53;
       --bg-medium: #456882;
@@ -68,7 +68,6 @@
     input, button {
       padding: 12px 16px;
       font-size: 16px;
-      margin-top: 16px;
       border: none;
       border-radius: 10px;
       box-sizing: border-box;
@@ -97,11 +96,24 @@
       margin-top: 32px;
       display: flex;
       gap: 12px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       justify-content: center;
       width: 100%;
-      max-width: 1200px;
+      max-width: 400px;
       box-sizing: border-box;
+    }
+    #admin-login input {
+      flex: 1;
+      margin: 0;
+      padding: 12px 14px;
+      font-size: 16px;
+      border-radius: 10px 0 0 10px;
+    }
+    #admin-login button {
+      padding: 12px 20px;
+      border-radius: 0 10px 10px 0;
+      font-size: 16px;
+      flex: 0 0 auto;
     }
     #logout-btn {
       margin-top: 32px;
@@ -113,6 +125,8 @@
       cursor: pointer;
       transition: background-color 0.3s;
       display: none;
+      width: 120px;
+      align-self: center;
     }
     #logout-btn:hover {
       background-color: #e0483d;
@@ -135,11 +149,30 @@
       overflow-y: auto;
       box-shadow: 0 8px 24px rgba(0,0,0,0.3);
       font-size: 14px;
+      position: relative;
     }
     #history h3 {
       margin-top: 0;
       color: var(--accent);
       margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #clear-history-btn {
+      background-color: #ff5e57;
+      border: none;
+      color: white;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      user-select: none;
+      transition: background-color 0.3s;
+    }
+    #clear-history-btn:hover {
+      background-color: #e0483d;
     }
     .history-item {
       background: rgba(255,255,255,0.1);
@@ -149,6 +182,9 @@
       cursor: pointer;
       position: relative;
       transition: background-color 0.3s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .history-item:hover {
       background: rgba(255,255,255,0.2);
@@ -158,9 +194,14 @@
       margin-top: 6px;
       font-style: italic;
       color: #ddd;
+      width: 100%;
+      padding-top: 4px;
     }
     .history-item.show-desc .desc {
       display: block;
+    }
+    .history-item .info {
+      flex: 1;
     }
     .history-item .type-add {
       color: #7edd7e; /* yeşil */
@@ -169,6 +210,46 @@
     .history-item .type-remove {
       color: #ff7f7f; /* kırmızı */
       font-weight: 700;
+    }
+    .history-item button.delete-btn {
+      background: transparent;
+      border: none;
+      color: #ff5e57;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 16px;
+      margin-left: 12px;
+      user-select: none;
+      transition: color 0.3s;
+      flex-shrink: 0;
+    }
+    .history-item button.delete-btn:hover {
+      color: #e0483d;
+    }
+
+    /* Admin işlemleri giriş formu */
+    .admin-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .admin-actions input[type=number],
+    .admin-actions input[type=text] {
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 16px;
+    }
+    .admin-actions input[type=number] {
+      width: 100px;
+    }
+    .admin-actions input[type=text] {
+      flex: 1;
+      min-width: 150px;
+    }
+    .admin-actions button {
+      flex: 0 0 auto;
+      min-width: 90px;
     }
 
     /* Responsive */
@@ -190,51 +271,54 @@
         font-size: 14px;
         padding: 10px 14px;
       }
+      .admin-actions {
+        flex-direction: column;
+      }
+      .admin-actions input[type=number], .admin-actions input[type=text], .admin-actions button {
+        width: 100%;
+        min-width: unset;
+      }
+      #admin-login {
+        max-width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-
   <h1>💸 Hedef Takip Sistemi</h1>
 
   <div id="main-container">
     <div id="cards"></div>
-
     <div id="history">
-      <h3>📜 İşlem Tarihçesi</h3>
-      <div id="history-list">
-        <!-- Tarihçe buraya gelecek -->
-      </div>
+      <h3>
+        📜 İşlem Tarihçesi
+        <button id="clear-history-btn" title="Tümünü Sil" style="display:none;">Tümünü Sil</button>
+      </h3>
+      <div id="history-list"></div>
     </div>
   </div>
 
   <div id="admin-login">
-    <input type="password" id="admin-pass" placeholder="Admin şifrəsi" />
+    <input type="password" id="admin-pass" placeholder="Şifrə" />
     <button id="admin-btn">Giriş</button>
   </div>
 
   <button id="logout-btn">Çıxış</button>
-
   <div class="footer">© 2025 Hedef Takip Sistemi</div>
 
   <script>
     const users = [
-      { name: "Sadiq", goal: 8000 },
-      { name: "Cavid", goal: 10000 }
+      { name: "Sadiq", goal: 8000, pass: "sadiq123" },
+      { name: "Cavid", goal: 10000, pass: "cavid123" }
     ];
 
-    // Veri ve işlem tarihçesi localStorage'da saklanacak
-    let data = JSON.parse(localStorage.getItem("hedefData")) || {
-      Sadiq: 0,
-      Cavid: 0
-    };
-
     let history = JSON.parse(localStorage.getItem("hedefHistory")) || [];
-
     let isAdmin = false;
+    let currentUser = null;
 
-    function saveData() {
-      localStorage.setItem("hedefData", JSON.stringify(data));
+    function getCurrentAmount(userName) {
+      return history.filter(h => h.user === userName)
+        .reduce((acc, cur) => cur.type === "add" ? acc + cur.amount : acc - cur.amount, 0);
     }
 
     function saveHistory() {
@@ -248,9 +332,11 @@
     function render() {
       const container = document.getElementById("cards");
       container.innerHTML = "";
+
       users.forEach(user => {
-        const current = data[user.name] || 0;
-        const percent = Math.min((current / user.goal) * 100, 100).toFixed(1);
+        const current = getCurrentAmount(user.name);
+        const safeCurrent = current < 0 ? 0 : current;
+        const percent = Math.min((safeCurrent / user.goal) * 100, 100).toFixed(1);
 
         const card = document.createElement("div");
         card.className = "card";
@@ -259,86 +345,50 @@
           <div class="progress">
             <div class="progress-bar" style="width: ${percent}%"></div>
           </div>
-          <p>Toplam: ${current}₼ (${percent}%)</p>
+          <p>Toplam: ${safeCurrent}₼ (${percent}%)</p>
         `;
 
-        if (isAdmin) {
-          const input = document.createElement("input");
-          input.placeholder = "Məbləğ";
-          input.type = "number";
-          input.min = "0";
-          input.style.flex = "1";
+        if (isAdmin && currentUser === user.name) {
+          const inputAmount = document.createElement("input");
+          inputAmount.placeholder = "Məbləğ";
+          inputAmount.type = "number";
+          inputAmount.min = "0";
 
-          const descInput = document.createElement("input");
-          descInput.placeholder = "Açıklama (zorunlu)";
-          descInput.type = "text";
-          descInput.style.flex = "2";
-          descInput.style.marginLeft = "12px";
+          const inputDesc = document.createElement("input");
+          inputDesc.placeholder = "Açıklama (zorunlu)";
+          inputDesc.type = "text";
 
           const btnAdd = document.createElement("button");
           btnAdd.innerText = "Əlavə et";
           btnAdd.onclick = () => {
-            const val = parseFloat(input.value);
-            const desc = descInput.value.trim();
-            if (!desc) {
-              alert("Lütfen açıklama giriniz!");
-              return;
-            }
+            const val = parseFloat(inputAmount.value);
+            const desc = inputDesc.value.trim();
+            if (!desc) return alert("Lütfen açıklama giriniz!");
             if (!isNaN(val) && val > 0) {
-              data[user.name] += val;
-              // İşlem tarihçesine ekle
-              history.unshift({
-                user: user.name,
-                type: "add",
-                amount: val,
-                desc,
-                date: new Date().toISOString()
-              });
-              saveData();
-              saveHistory();
-              render();
-            } else {
-              alert("Geçerli bir miktar giriniz!");
-            }
+              history.unshift({ user: user.name, type: "add", amount: val, desc, date: new Date().toISOString() });
+              saveHistory(); render(); inputAmount.value = ""; inputDesc.value = "";
+            } else alert("Geçerli bir miktar giriniz!");
           };
 
           const btnRemove = document.createElement("button");
           btnRemove.innerText = "Çıxart";
           btnRemove.className = "btn-red";
           btnRemove.onclick = () => {
-            const val = parseFloat(input.value);
-            const desc = descInput.value.trim();
-            if (!desc) {
-              alert("Lütfen açıklama giriniz!");
-              return;
-            }
+            const val = parseFloat(inputAmount.value);
+            const desc = inputDesc.value.trim();
+            if (!desc) return alert("Lütfen açıklama giriniz!");
             if (!isNaN(val) && val > 0) {
-              data[user.name] = Math.max(0, data[user.name] - val);
-              // İşlem tarihçesine ekle
-              history.unshift({
-                user: user.name,
-                type: "remove",
-                amount: val,
-                desc,
-                date: new Date().toISOString()
-              });
-              saveData();
-              saveHistory();
-              render();
-            } else {
-              alert("Geçerli bir miktar giriniz!");
-            }
+              history.unshift({ user: user.name, type: "remove", amount: val, desc, date: new Date().toISOString() });
+              saveHistory(); render(); inputAmount.value = ""; inputDesc.value = "";
+            } else alert("Geçerli bir miktar giriniz!");
           };
 
           const wrapper = document.createElement("div");
-          wrapper.style.display = "flex";
-          wrapper.style.gap = "12px";
-          wrapper.style.marginTop = "16px";
-          wrapper.appendChild(input);
-          wrapper.appendChild(descInput);
+          wrapper.className = "admin-actions";
+          wrapper.appendChild(inputAmount);
+          wrapper.appendChild(inputDesc);
           wrapper.appendChild(btnAdd);
           wrapper.appendChild(btnRemove);
-
           card.appendChild(wrapper);
         }
 
@@ -350,58 +400,84 @@
 
     function renderHistory() {
       const historyList = document.getElementById("history-list");
+      const clearBtn = document.getElementById("clear-history-btn");
       historyList.innerHTML = "";
 
       if (history.length === 0) {
         historyList.innerHTML = "<p>Henüz işlem yapılmadı.</p>";
+        clearBtn.style.display = "none";
         return;
       }
 
-      history.forEach((item, index) => {
+      clearBtn.style.display = isAdmin ? "inline-block" : "none";
+
+      history.forEach(item => {
         const div = document.createElement("div");
         div.className = "history-item";
         div.innerHTML = `
-          <div>
+          <div class="info">
             <strong>${item.user}</strong> - 
             <span class="${item.type === "add" ? "type-add" : "type-remove"}">
               ${item.type === "add" ? "Əlavə edildi" : "Çıxarıldı"}
             </span> - 
-            ${item.amount}₼
+            ${item.amount}₼<br>
+            <small>${formatDate(new Date(item.date))}</small>
+            <div class="desc">${item.desc}</div>
           </div>
-          <div>${formatDate(new Date(item.date))}</div>
-          <div class="desc">${item.desc}</div>
         `;
-
-        // Tıklayınca açıklamayı göster/gizle
-        div.addEventListener("click", () => {
-          div.classList.toggle("show-desc");
-        });
-
+        if (isAdmin) {
+          const delBtn = document.createElement("button");
+          delBtn.className = "delete-btn";
+          delBtn.textContent = "✖";
+          delBtn.onclick = (e) => {
+            e.stopPropagation();
+            if (confirm("Bu işlemi silmek istediğinize emin misiniz?")) {
+              history = history.filter(h => h !== item);
+              saveHistory(); render();
+            }
+          };
+          div.appendChild(delBtn);
+        }
+        div.onclick = () => div.classList.toggle("show-desc");
         historyList.appendChild(div);
       });
     }
 
-    document.getElementById("admin-btn").addEventListener("click", () => {
-      const pass = document.getElementById("admin-pass").value.trim();
-      if (pass === "admin123") {
+    document.getElementById("clear-history-btn").onclick = () => {
+      if (confirm("Tüm işlem geçmişini silmek istediğinize emin misiniz?")) {
+        history = [];
+        saveHistory(); render();
+      }
+    };
+
+    function tryLogin() {
+      const passInput = document.getElementById("admin-pass").value.trim();
+      const user = users.find(u => u.pass === passInput);
+      if (user) {
         isAdmin = true;
+        currentUser = user.name;
         document.getElementById("admin-login").style.display = "none";
         document.getElementById("logout-btn").style.display = "inline-block";
         render();
       } else {
-        alert("Şifrə yanlışdır");
+        alert("Şifre yanlış!");
       }
+    }
+
+    document.getElementById("admin-btn").onclick = tryLogin;
+    document.getElementById("admin-pass").addEventListener("keydown", e => {
+      if (e.key === "Enter") tryLogin();
     });
 
-    document.getElementById("logout-btn").addEventListener("click", () => {
+    document.getElementById("logout-btn").onclick = () => {
       isAdmin = false;
+      currentUser = null;
       document.getElementById("admin-login").style.display = "flex";
       document.getElementById("logout-btn").style.display = "none";
       render();
-    });
+    };
 
     render();
   </script>
-
 </body>
 </html>

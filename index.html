@@ -3,8 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hedef Takip Sistemi - Güvenli</title>
+  <!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Hedef Takip Sistemi</title>
-  <style>
+    <style>
     :root {
       --bg-dark: #1B3C53;
       --bg-medium: #456882;
@@ -306,70 +312,30 @@
   <button id="logout-btn">Çıxış</button>
   <div class="footer">© 2025 Hedef Takip Sistemi</div>
 
-  <!-- Firebase CDN -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCaNltiGwH5APPJYYul7UmFrCplNYIZmhM",
-      authDomain: "hedef-takip-1395c.firebaseapp.com",
-      projectId: "hedef-takip-1395c",
-      storageBucket: "hedef-takip-1395c.firebasestorage.app",
-      messagingSenderId: "798761628344",
-      appId: "1:798761628344:web:c3118580d598c3efbbba4d",
-      measurementId: "G-J2E4223Q3M"
-    };
-
-    // Firebase'i başlat
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
     const users = [
       { name: "Sadiq", goal: 8000, pass: "sadiq123" },
       { name: "Cavid", goal: 10000, pass: "cavid123" }
     ];
 
-    let history = [];
+    let history = JSON.parse(localStorage.getItem("hedefHistory")) || [];
     let isAdmin = false;
     let currentUser = null;
-
-    // Firestore'dan history'yi gerçek zamanlı dinle
-    let unsubscribeHistory = null;
-    function listenHistoryRealtime() {
-      if (unsubscribeHistory) unsubscribeHistory();
-      unsubscribeHistory = db.collection("history")
-        .orderBy("date", "desc")
-        .onSnapshot(snapshot => {
-          history = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          render();
-        });
-    }
 
     function getCurrentAmount(userName) {
       return history.filter(h => h.user === userName)
         .reduce((acc, cur) => cur.type === "add" ? acc + cur.amount : acc - cur.amount, 0);
     }
 
-    function saveHistoryFirestore(entry) {
-      return db.collection("history").add(entry);
+    function saveHistory() {
+      localStorage.setItem("hedefHistory", JSON.stringify(history));
     }
 
-    function deleteHistoryFirestore(id) {
-      return db.collection("history").doc(id).delete();
+    function formatDate(date) {
+      return date.toLocaleDateString('tr-TR') + " " + date.toLocaleTimeString('tr-TR');
     }
 
-    function clearHistoryFirestore() {
-      // Not: Firestore'da toplu silme yok, her kaydı tek tek sil
-      const batch = db.batch();
-      history.forEach(item => {
-        const docRef = db.collection("history").doc(item.id);
-        batch.delete(docRef);
-      });
-      return batch.commit();
-    }
-
-    function renderCards() {
+    function render() {
       const container = document.getElementById("cards");
       container.innerHTML = "";
 
@@ -405,16 +371,8 @@
             const desc = inputDesc.value.trim();
             if (!desc) return alert("Lütfen açıklama giriniz!");
             if (!isNaN(val) && val > 0) {
-              saveHistoryFirestore({
-                user: user.name,
-                type: "add",
-                amount: val,
-                desc,
-                date: new Date()
-              }).then(() => {
-                inputAmount.value = "";
-                inputDesc.value = "";
-              });
+              history.unshift({ user: user.name, type: "add", amount: val, desc, date: new Date().toISOString() });
+              saveHistory(); render(); inputAmount.value = ""; inputDesc.value = "";
             } else alert("Geçerli bir miktar giriniz!");
           };
 
@@ -426,16 +384,8 @@
             const desc = inputDesc.value.trim();
             if (!desc) return alert("Lütfen açıklama giriniz!");
             if (!isNaN(val) && val > 0) {
-              saveHistoryFirestore({
-                user: user.name,
-                type: "remove",
-                amount: val,
-                desc,
-                date: new Date()
-              }).then(() => {
-                inputAmount.value = "";
-                inputDesc.value = "";
-              });
+              history.unshift({ user: user.name, type: "remove", amount: val, desc, date: new Date().toISOString() });
+              saveHistory(); render(); inputAmount.value = ""; inputDesc.value = "";
             } else alert("Geçerli bir miktar giriniz!");
           };
 
@@ -450,6 +400,8 @@
 
         container.appendChild(card);
       });
+
+      renderHistory();
     }
 
     function renderHistory() {
@@ -475,11 +427,10 @@
               ${item.type === "add" ? "Əlavə edildi" : "Çıxarıldı"}
             </span> - 
             ${item.amount}₼<br>
-            <small>${new Date(item.date.seconds ? item.date.seconds * 1000 : item.date).toLocaleString('tr-TR')}</small>
+            <small>${formatDate(new Date(item.date))}</small>
             <div class="desc">${item.desc}</div>
           </div>
         `;
-
         if (isAdmin) {
           const delBtn = document.createElement("button");
           delBtn.className = "delete-btn";
@@ -487,14 +438,12 @@
           delBtn.onclick = (e) => {
             e.stopPropagation();
             if (confirm("Bu işlemi silmek istediğinize emin misiniz?")) {
-              deleteHistoryFirestore(item.id).then(() => {
-                // Silme sonrası Firestore snapshot ile otomatik güncellenecek
-              });
+              history = history.filter(h => h !== item);
+              saveHistory(); render();
             }
           };
           div.appendChild(delBtn);
         }
-
         div.onclick = () => div.classList.toggle("show-desc");
         historyList.appendChild(div);
       });
@@ -502,9 +451,8 @@
 
     document.getElementById("clear-history-btn").onclick = () => {
       if (confirm("Tüm işlem geçmişini silmek istediğinize emin misiniz?")) {
-        clearHistoryFirestore().then(() => {
-          // Temizleme sonrası Firestore snapshot ile otomatik güncellenecek
-        });
+        history = [];
+        saveHistory(); render();
       }
     };
 
@@ -535,13 +483,233 @@
       render();
     };
 
-    function render() {
-      renderCards();
-      renderHistory();
+    render();
+  </script>
+</body>
+</html>
+</head>
+<body>
+  <h1>💸 Hedef Takip Sistemi (Güvenli)</h1>
+
+  <div id="auth-section">
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Şifre" />
+    <button id="login-btn">Giriş Yap</button>
+    <button id="logout-btn" style="display:none;">Çıkış Yap</button>
+    <p id="auth-message"></p>
+  </div>
+
+  <div id="main-container" style="display:none;">
+    <div id="cards"></div>
+    <div id="history">
+      <h3>
+        📜 İşlem Tarihçesi
+      </h3>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCaNltiGwH5APPJYYul7UmFrCplNYIZmhM",
+      authDomain: "hedef-takip-1395c.firebaseapp.com",
+      projectId: "hedef-takip-1395c",
+      storageBucket: "hedef-takip-1395c.appspot.com",
+      messagingSenderId: "798761628344",
+      appId: "1:798761628344:web:c3118580d598c3efbbba4d",
+      measurementId: "G-J2E4223Q3M"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const users = [
+      { name: "Sadiq", goal: 8000 },
+      { name: "Cavid", goal: 10000 }
+    ];
+
+    let currentUserEmail = null;
+
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginBtn = document.getElementById("login-btn");
+    const logoutBtn = document.getElementById("logout-btn");
+    const authMessage = document.getElementById("auth-message");
+    const mainContainer = document.getElementById("main-container");
+    const cardsContainer = document.getElementById("cards");
+    const historyList = document.getElementById("history-list");
+
+    loginBtn.onclick = () => {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+      if (!email || !password) {
+        alert("Email ve şifre giriniz!");
+        return;
+      }
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          authMessage.textContent = "";
+        })
+        .catch(err => {
+          authMessage.textContent = "Giriş hatası: " + err.message;
+        });
+    };
+
+    logoutBtn.onclick = () => {
+      signOut(auth);
+    };
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        currentUserEmail = user.email;
+        authMessage.textContent = "Hoşgeldin, " + currentUserEmail;
+        emailInput.style.display = "none";
+        passwordInput.style.display = "none";
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        mainContainer.style.display = "flex";
+        setupRealtimeListeners();
+      } else {
+        currentUserEmail = null;
+        authMessage.textContent = "Lütfen giriş yapınız.";
+        emailInput.style.display = "inline-block";
+        passwordInput.style.display = "inline-block";
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        mainContainer.style.display = "none";
+        clearUI();
+      }
+    });
+
+    // Firestore realtime updates
+
+    let unsubscribeHistory = null;
+
+    function setupRealtimeListeners() {
+      if (unsubscribeHistory) unsubscribeHistory();
+
+      const q = query(collection(db, "history"), orderBy("date", "desc"));
+
+      unsubscribeHistory = onSnapshot(q, snapshot => {
+        historyList.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const item = document.createElement("div");
+          item.className = "history-item";
+          item.innerHTML = `
+            <strong>${data.user}</strong> - 
+            <span style="color:${data.type === "add" ? "#7edd7e" : "#ff7f7f"}; font-weight:bold;">
+              ${data.type === "add" ? "Əlavə edildi" : "Çıxarıldı"}
+            </span> - 
+            ${data.amount}₼<br>
+            <small>${new Date(data.date).toLocaleString('tr-TR')}</small>
+            <div style="font-style:italic; color:#ddd; margin-top:6px;">${data.desc}</div>
+          `;
+          historyList.appendChild(item);
+        });
+
+        renderCards(snapshot.docs.map(d => d.data()));
+      });
     }
 
-    // Sayfa yüklendiğinde Firestore'dan gerçek zamanlı dinlemeyi başlat
-    listenHistoryRealtime();
+    function renderCards(historyData) {
+      cardsContainer.innerHTML = "";
+      users.forEach(user => {
+        // Kullanıcının toplam miktarını hesapla
+        const total = historyData
+          .filter(h => h.user === user.name)
+          .reduce((acc, cur) => cur.type === "add" ? acc + cur.amount : acc - cur.amount, 0);
+
+        const safeTotal = total < 0 ? 0 : total;
+        const percent = Math.min((safeTotal / user.goal) * 100, 100).toFixed(1);
+
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h2>${user.name} - Hedef: ${user.goal}₼</h2>
+          <div class="progress">
+            <div class="progress-bar" style="width: ${percent}%;"></div>
+          </div>
+          <p>Toplam: ${safeTotal}₼ (${percent}%)</p>
+        `;
+
+        // Sadece giriş yapan kullanıcı için ekleme/çıkarma alanı göster
+        if (currentUserEmail && currentUserEmail.toLowerCase().startsWith(user.name.toLowerCase())) {
+          const inputAmount = document.createElement("input");
+          inputAmount.placeholder = "Məbləğ";
+          inputAmount.type = "number";
+          inputAmount.min = "0";
+
+          const inputDesc = document.createElement("input");
+          inputDesc.placeholder = "Açıklama (zorunlu)";
+          inputDesc.type = "text";
+
+          const btnAdd = document.createElement("button");
+          btnAdd.textContent = "Əlavə et";
+          btnAdd.onclick = async () => {
+            const val = parseFloat(inputAmount.value);
+            const desc = inputDesc.value.trim();
+            if (!desc) return alert("Lütfen açıklama giriniz!");
+            if (!isNaN(val) && val > 0) {
+              await addDoc(collection(db, "history"), {
+                user: user.name,
+                type: "add",
+                amount: val,
+                desc,
+                date: new Date().toISOString()
+              });
+              inputAmount.value = "";
+              inputDesc.value = "";
+            } else {
+              alert("Geçerli bir miktar giriniz!");
+            }
+          };
+
+          const btnRemove = document.createElement("button");
+          btnRemove.textContent = "Çıxart";
+          btnRemove.style.backgroundColor = "#ff5e57";
+          btnRemove.style.color = "white";
+          btnRemove.onclick = async () => {
+            const val = parseFloat(inputAmount.value);
+            const desc = inputDesc.value.trim();
+            if (!desc) return alert("Lütfen açıklama giriniz!");
+            if (!isNaN(val) && val > 0) {
+              await addDoc(collection(db, "history"), {
+                user: user.name,
+                type: "remove",
+                amount: val,
+                desc,
+                date: new Date().toISOString()
+              });
+              inputAmount.value = "";
+              inputDesc.value = "";
+            } else {
+              alert("Geçerli bir miktar giriniz!");
+            }
+          };
+
+          const adminActions = document.createElement("div");
+          adminActions.className = "admin-actions";
+          adminActions.appendChild(inputAmount);
+          adminActions.appendChild(inputDesc);
+          adminActions.appendChild(btnAdd);
+          adminActions.appendChild(btnRemove);
+          card.appendChild(adminActions);
+        }
+
+        cardsContainer.appendChild(card);
+      });
+    }
+
+    function clearUI() {
+      cardsContainer.innerHTML = "";
+      historyList.innerHTML = "";
+    }
   </script>
 </body>
 </html>

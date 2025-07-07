@@ -306,30 +306,82 @@
   <button id="logout-btn">Çıxış</button>
   <div class="footer">© 2025 Hedef Takip Sistemi</div>
 
+  <!-- Firebase SDK'ları -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
   <script>
+    // Firebase yapılandırması
+    const firebaseConfig = {
+      apiKey: "AIzaSyCaNltiGwH5APPJYYul7UmFrCplNYIZmhM",
+      authDomain: "hedef-takip-1395c.firebaseapp.com",
+      projectId: "hedef-takip-1395c",
+      storageBucket: "hedef-takip-1395c.appspot.com",
+      messagingSenderId: "798761628344",
+      appId: "1:798761628344:web:c3118580d598c3efbbba4d",
+      measurementId: "G-J2E4223Q3M"
+    };
+
+    // Firebase başlatma
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Sabit kullanıcılar (isteğe bağlı, Firestore'da da tutulabilir)
     const users = [
       { name: "Sadiq", goal: 8000, pass: "sadiq123" },
       { name: "Cavid", goal: 10000, pass: "cavid123" }
     ];
 
-    let history = JSON.parse(localStorage.getItem("hedefHistory")) || [];
+    let history = [];
     let isAdmin = false;
     let currentUser = null;
+
+    // Firestore'dan işlemleri çek
+    async function fetchHistory() {
+      const snapshot = await db.collection("hedefHistory").orderBy("date", "desc").get();
+      history = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
+    // Firestore'dan işlem ekle
+    async function addHistoryItem(item) {
+      await db.collection("hedefHistory").add({
+        user: item.user,
+        type: item.type,
+        amount: item.amount,
+        desc: item.desc,
+        date: item.date
+      });
+      await fetchHistory();
+    }
+
+    // Firestore'dan işlem sil
+    async function deleteHistoryItem(id) {
+      await db.collection("hedefHistory").doc(id).delete();
+      await fetchHistory();
+    }
+
+    // Firestore'daki tüm işlemleri temizle
+    async function clearAllHistory() {
+      const snapshot = await db.collection("hedefHistory").get();
+      const batch = db.batch();
+      snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      await fetchHistory();
+    }
 
     function getCurrentAmount(userName) {
       return history.filter(h => h.user === userName)
         .reduce((acc, cur) => cur.type === "add" ? acc + cur.amount : acc - cur.amount, 0);
     }
 
-    function saveHistory() {
-      localStorage.setItem("hedefHistory", JSON.stringify(history));
-    }
-
     function formatDate(date) {
       return date.toLocaleDateString('tr-TR') + " " + date.toLocaleTimeString('tr-TR');
     }
 
-    function render() {
+    async function render() {
+      await fetchHistory();
       const container = document.getElementById("cards");
       container.innerHTML = "";
 
@@ -360,26 +412,28 @@
 
           const btnAdd = document.createElement("button");
           btnAdd.innerText = "Əlavə et";
-          btnAdd.onclick = () => {
+          btnAdd.onclick = async () => {
             const val = parseFloat(inputAmount.value);
             const desc = inputDesc.value.trim();
             if (!desc) return alert("Lütfen açıklama giriniz!");
             if (!isNaN(val) && val > 0) {
-              history.unshift({ user: user.name, type: "add", amount: val, desc, date: new Date().toISOString() });
-              saveHistory(); render(); inputAmount.value = ""; inputDesc.value = "";
+              await addHistoryItem({ user: user.name, type: "add", amount: val, desc, date: new Date().toISOString() });
+              await render();
+              inputAmount.value = ""; inputDesc.value = "";
             } else alert("Geçerli bir miktar giriniz!");
           };
 
           const btnRemove = document.createElement("button");
           btnRemove.innerText = "Çıxart";
           btnRemove.className = "btn-red";
-          btnRemove.onclick = () => {
+          btnRemove.onclick = async () => {
             const val = parseFloat(inputAmount.value);
             const desc = inputDesc.value.trim();
             if (!desc) return alert("Lütfen açıklama giriniz!");
             if (!isNaN(val) && val > 0) {
-              history.unshift({ user: user.name, type: "remove", amount: val, desc, date: new Date().toISOString() });
-              saveHistory(); render(); inputAmount.value = ""; inputDesc.value = "";
+              await addHistoryItem({ user: user.name, type: "remove", amount: val, desc, date: new Date().toISOString() });
+              await render();
+              inputAmount.value = ""; inputDesc.value = "";
             } else alert("Geçerli bir miktar giriniz!");
           };
 
@@ -429,11 +483,11 @@
           const delBtn = document.createElement("button");
           delBtn.className = "delete-btn";
           delBtn.textContent = "✖";
-          delBtn.onclick = (e) => {
+          delBtn.onclick = async (e) => {
             e.stopPropagation();
             if (confirm("Bu işlemi silmek istediğinize emin misiniz?")) {
-              history = history.filter(h => h !== item);
-              saveHistory(); render();
+              await deleteHistoryItem(item.id);
+              await render();
             }
           };
           div.appendChild(delBtn);
@@ -443,10 +497,10 @@
       });
     }
 
-    document.getElementById("clear-history-btn").onclick = () => {
+    document.getElementById("clear-history-btn").onclick = async () => {
       if (confirm("Tüm işlem geçmişini silmek istediğinize emin misiniz?")) {
-        history = [];
-        saveHistory(); render();
+        await clearAllHistory();
+        await render();
       }
     };
 
@@ -477,6 +531,7 @@
       render();
     };
 
+    // İlk render çağrısı
     render();
   </script>
 </body>

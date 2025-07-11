@@ -11,6 +11,7 @@
       --accent: #D2C1B6;
       --text-light: #f9f9f9;
     }
+
     body {
       font-family: 'Segoe UI', sans-serif;
       background: var(--bg-dark);
@@ -22,12 +23,57 @@
       align-items: center;
       min-height: 100vh;
     }
+    #loading-screen {
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #1B3C53, #456882);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.5s ease;
+}
+
+#loading-screen .loader-text {
+  color: #fff; /* Beyaz yapalım */
+  font-weight: bold;
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.4); /* Hafif gölge ile netlik */
+  font-size: 1.8rem;
+  margin-bottom: 24px;
+  animation: fadeInText 1.2s infinite alternate;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 6px solid rgba(255, 255, 255, 0.2); /* Daha silik dış hat */
+  border-top: 6px solid #fff; /* Parlak dönen çizgi */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.3); /* Hafif dış parlama */
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeInText {
+  from { opacity: 0.5; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1.05); }
+}
+
     h1 {
       font-size: 2.8rem;
       margin-bottom: 40px;
       color: var(--accent);
       text-align: center;
       width: 100%;
+      animation: scaleIn 0.8s ease;
     }
 
     #main-container {
@@ -42,56 +88,75 @@
       flex: 1;
       max-width: 600px;
     }
+
     .card {
       background: var(--bg-medium);
       border-radius: 16px;
       padding: 28px 32px;
       margin: 16px 0;
       box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-      transition: transform 0.2s;
+      transition: transform 0.3s, box-shadow 0.3s;
+      animation: fadeInUp 0.6s ease both;
+      position: relative;
     }
+
     .card:hover {
-      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+      cursor: pointer;
     }
+
     .progress {
       height: 22px;
       background: rgba(255,255,255,0.12);
       border-radius: 12px;
       overflow: hidden;
       margin-top: 12px;
+      position: relative;
     }
+
     .progress-bar {
       height: 100%;
-      background: var(--accent);
-      transition: width 0.5s;
+      background: linear-gradient(270deg, #D2C1B6, #F0E9E1, #D2C1B6);
+      background-size: 600% 600%;
+      animation: gradientShift 5s ease infinite;
+      border-radius: 12px 0 0 12px;
+      transition: width 1s ease-in-out;
+      will-change: width, background-position;
     }
+
     input, button {
       padding: 12px 16px;
       font-size: 16px;
       border: none;
       border-radius: 10px;
       box-sizing: border-box;
+      transition: all 0.3s ease;
     }
+
     input {
       flex: 1;
       margin-right: 12px;
     }
+
     button {
       background-color: var(--accent);
       color: var(--bg-dark);
       cursor: pointer;
       font-weight: 700;
-      transition: background-color 0.3s;
     }
+
     button:hover {
       background-color: #bdaea2;
     }
+
     .btn-red {
       background-color: #ff5e57;
     }
+
     .btn-red:hover {
       background-color: #e0483d;
     }
+
     #admin-login {
       margin-top: 32px;
       display: flex;
@@ -102,6 +167,7 @@
       max-width: 400px;
       box-sizing: border-box;
     }
+
     #admin-login input {
       flex: 1;
       margin: 0;
@@ -109,12 +175,14 @@
       font-size: 16px;
       border-radius: 10px 0 0 10px;
     }
+
     #admin-login button {
       padding: 12px 20px;
       border-radius: 0 10px 10px 0;
       font-size: 16px;
       flex: 0 0 auto;
     }
+
     #logout-btn {
       margin-top: 32px;
       background-color: #ff5e57;
@@ -123,14 +191,16 @@
       padding: 12px 24px;
       border-radius: 10px;
       cursor: pointer;
-      transition: background-color 0.3s;
       display: none;
       width: 120px;
       align-self: center;
+      transition: background-color 0.3s;
     }
+
     #logout-btn:hover {
       background-color: #e0483d;
     }
+
     .footer {
       margin-top: 60px;
       font-size: 13px;
@@ -139,7 +209,6 @@
       max-width: 700px;
     }
 
-    /* Tarihçe bölümü */
     #history {
       flex: 0.8;
       background: var(--bg-medium);
@@ -151,6 +220,7 @@
       font-size: 14px;
       position: relative;
     }
+
     #history h3 {
       margin-top: 0;
       color: var(--accent);
@@ -159,6 +229,7 @@
       justify-content: space-between;
       align-items: center;
     }
+
     #clear-history-btn {
       background-color: #ff5e57;
       border: none;
@@ -170,10 +241,13 @@
       font-size: 13px;
       user-select: none;
       transition: background-color 0.3s;
+      display: none;
     }
+
     #clear-history-btn:hover {
       background-color: #e0483d;
     }
+
     .history-item {
       background: rgba(255,255,255,0.1);
       border-radius: 12px;
@@ -185,10 +259,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      animation: fadeInUp 0.4s ease both;
     }
+
     .history-item:hover {
       background: rgba(255,255,255,0.2);
     }
+
     .history-item .desc {
       display: none;
       margin-top: 6px;
@@ -197,20 +274,25 @@
       width: 100%;
       padding-top: 4px;
     }
+
     .history-item.show-desc .desc {
       display: block;
     }
+
     .history-item .info {
       flex: 1;
     }
+
     .history-item .type-add {
-      color: #7edd7e; /* yeşil */
+      color: #7edd7e;
       font-weight: 700;
     }
+
     .history-item .type-remove {
-      color: #ff7f7f; /* kırmızı */
+      color: #ff7f7f;
       font-weight: 700;
     }
+
     .history-item button.delete-btn {
       background: transparent;
       border: none;
@@ -222,37 +304,117 @@
       user-select: none;
       transition: color 0.3s;
       flex-shrink: 0;
+      display: none; /* Başlangıçta görünmez, admin girince gösterilecek */
     }
+
     .history-item button.delete-btn:hover {
       color: #e0483d;
     }
 
-    /* Admin işlemleri giriş formu */
     .admin-actions {
       display: flex;
       gap: 12px;
       margin-top: 16px;
       flex-wrap: wrap;
     }
+
     .admin-actions input[type=number],
     .admin-actions input[type=text] {
       border-radius: 10px;
       padding: 12px 14px;
       font-size: 16px;
     }
+
     .admin-actions input[type=number] {
       width: 100px;
     }
+
     .admin-actions input[type=text] {
       flex: 1;
       min-width: 150px;
     }
+
     .admin-actions button {
       flex: 0 0 auto;
       min-width: 90px;
     }
 
-    /* Responsive */
+    .medals-container {
+      margin-left: 12px;
+      font-size: 1.4rem;
+      user-select: none;
+    }
+
+    .medal {
+      margin-left: 6px;
+      user-select: none;
+    }
+
+    .history-medal {
+      background: linear-gradient(90deg, #f9d423, #ff4e50);
+      color: black;
+      font-weight: 700;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      animation: medalBurst 1s ease forwards;
+      box-shadow: 0 0 8px 3px gold;
+      position: relative;
+      overflow: visible;
+      position: relative;
+    }
+
+    .type-medal {
+      font-size: 1.1rem;
+      display: inline-block;
+    }
+
+    @keyframes medalBurst {
+      0% {
+        transform: scale(0.8);
+        opacity: 0;
+        filter: drop-shadow(0 0 0 transparent);
+      }
+      50% {
+        transform: scale(1.1);
+        opacity: 1;
+        filter: drop-shadow(0 0 12px gold);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+        filter: drop-shadow(0 0 6px gold);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes scaleIn {
+      from {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
     @media (max-width: 900px) {
       #main-container {
         flex-direction: column;
@@ -285,6 +447,10 @@
   </style>
 </head>
 <body>
+  <div id="loading-screen">
+  <div class="loader-text">🎯 Hedef Yükleniyor...</div>
+  <div class="spinner"></div>
+</div>
   <h1>💸 Hedef Takip Sistemi</h1>
 
   <div id="main-container">
@@ -292,7 +458,7 @@
     <div id="history">
       <h3>
         📜 İşlem Tarihçesi
-        <button id="clear-history-btn" title="Tümünü Sil" style="display:none;">Tümünü Sil</button>
+        <button id="clear-history-btn" title="Tümünü Sil">Tümünü Sil</button>
       </h3>
       <div id="history-list"></div>
     </div>
@@ -306,11 +472,11 @@
   <button id="logout-btn">Çıxış</button>
   <div class="footer">© 2025 Hedef Takip Sistemi</div>
 
-  <!-- Firebase CDN -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
+    let firstLoad = true;
     const firebaseConfig = {
       apiKey: "AIzaSyCaNltiGwH5APPJYYul7UmFrCplNYIZmhM",
       authDomain: "hedef-takip-1395c.firebaseapp.com",
@@ -321,7 +487,6 @@
       measurementId: "G-J2E4223Q3M"
     };
 
-    // Firebase'i başlat
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -334,7 +499,6 @@
     let isAdmin = false;
     let currentUser = null;
 
-    // Firestore'dan history'yi gerçek zamanlı dinle
     let unsubscribeHistory = null;
     function listenHistoryRealtime() {
       if (unsubscribeHistory) unsubscribeHistory();
@@ -342,14 +506,57 @@
         .orderBy("date", "desc")
         .onSnapshot(snapshot => {
           history = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+              if (firstLoad) {
+        const loader = document.getElementById("loading-screen");
+        loader.style.opacity = "0";
+        setTimeout(() => loader.style.display = "none", 500);
+        firstLoad = false;
+      }
           render();
         });
     }
 
     function getCurrentAmount(userName) {
       return history.filter(h => h.user === userName)
-        .reduce((acc, cur) => cur.type === "add" ? acc + cur.amount : acc - cur.amount, 0);
+        .reduce((acc, cur) => {
+          if(cur.type === "add") return acc + cur.amount;
+          else if(cur.type === "remove") return acc - cur.amount;
+          else return acc;
+        }, 0);
     }
+
+    async function checkAndAddMedals(user) {
+  const current = getCurrentAmount(user.name);
+  const goal = user.goal;
+  const medals = [0.25, 0.5, 0.75, 1];
+
+  const mesajlar = {
+    0.25: "İlk addımı atdın! Davam et, uğur yaxınlaşır. 🥉",
+    0.5: "Yolun yarısını keçdin! Qətiyyətin təqdirəlayiqdir. 🥈",
+    0.75: "Son düzlükdəsən! Az qalıb, əzmindən dönmə! 🥇",
+    1: "Möhtəşəm iş! Məqsədinə tam çatdın! 🎯🏆"
+  };
+
+  for (const threshold of medals) {
+    if (current >= goal * threshold) {
+      const medalExists = history.some(
+        h => h.user === user.name && h.type === "medal" && h.amount === threshold
+      );
+      if (!medalExists) {
+        await saveHistoryFirestore({
+          user: user.name,
+          type: "medal",
+          amount: threshold,
+          desc: mesajlar[threshold] || "Təbriklər, medal qazandın!",
+          date: new Date()
+        });
+      }
+    }
+  }
+}  // <-- İşte buraya eksik olan kapanış parantezi
+
+
+
 
     function saveHistoryFirestore(entry) {
       return db.collection("history").add(entry);
@@ -360,7 +567,6 @@
     }
 
     function clearHistoryFirestore() {
-      // Not: Firestore'da toplu silme yok, her kaydı tek tek sil
       const batch = db.batch();
       history.forEach(item => {
         const docRef = db.collection("history").doc(item.id);
@@ -374,16 +580,29 @@
       container.innerHTML = "";
 
       users.forEach(user => {
+        checkAndAddMedals(user).catch(console.error);
+
         const current = getCurrentAmount(user.name);
         const safeCurrent = current < 0 ? 0 : current;
         const percent = Math.min((safeCurrent / user.goal) * 100, 100).toFixed(1);
 
+        const userMedals = history.filter(h => h.user === user.name && h.type === "medal").map(m => m.amount);
+        const medalIcons = {
+          0.25: "🥉",
+          0.5: "🥈",
+          0.75: "🥇",
+          1: "🏆"
+        };
+
+        const medalsHTML = userMedals.map(m => `<span class="medal">${medalIcons[m] || "🎖️"}</span>`).join(" ");
+
         const card = document.createElement("div");
         card.className = "card";
+
         card.innerHTML = `
-          <h2>${user.name} - Hedef: ${user.goal}₼</h2>
+          <h2>${user.name} - Hedef: ${user.goal}₼ <span class="medals-container">${medalsHTML}</span></h2>
           <div class="progress">
-            <div class="progress-bar" style="width: ${percent}%"></div>
+            <div class="progress-bar" style="width: ${percent}%;"></div>
           </div>
           <p>Toplam: ${safeCurrent}₼ (${percent}%)</p>
         `;
@@ -400,6 +619,7 @@
 
           const btnAdd = document.createElement("button");
           btnAdd.innerText = "Əlavə et";
+
           btnAdd.onclick = () => {
             const val = parseFloat(inputAmount.value);
             const desc = inputDesc.value.trim();
@@ -421,6 +641,7 @@
           const btnRemove = document.createElement("button");
           btnRemove.innerText = "Çıxart";
           btnRemove.className = "btn-red";
+
           btnRemove.onclick = () => {
             const val = parseFloat(inputAmount.value);
             const desc = inputDesc.value.trim();
@@ -439,13 +660,14 @@
             } else alert("Geçerli bir miktar giriniz!");
           };
 
-          const wrapper = document.createElement("div");
-          wrapper.className = "admin-actions";
-          wrapper.appendChild(inputAmount);
-          wrapper.appendChild(inputDesc);
-          wrapper.appendChild(btnAdd);
-          wrapper.appendChild(btnRemove);
-          card.appendChild(wrapper);
+          const adminDiv = document.createElement("div");
+          adminDiv.className = "admin-actions";
+          adminDiv.appendChild(inputAmount);
+          adminDiv.appendChild(inputDesc);
+          adminDiv.appendChild(btnAdd);
+          adminDiv.appendChild(btnRemove);
+
+          card.appendChild(adminDiv);
         }
 
         container.appendChild(card);
@@ -453,94 +675,140 @@
     }
 
     function renderHistory() {
-      const historyList = document.getElementById("history-list");
-      const clearBtn = document.getElementById("clear-history-btn");
-      historyList.innerHTML = "";
-
-      if (history.length === 0) {
-        historyList.innerHTML = "<p>Henüz işlem yapılmadı.</p>";
-        clearBtn.style.display = "none";
-        return;
-      }
-
-      clearBtn.style.display = isAdmin ? "inline-block" : "none";
+      const container = document.getElementById("history-list");
+      container.innerHTML = "";
 
       history.forEach(item => {
         const div = document.createElement("div");
         div.className = "history-item";
-        div.innerHTML = `
-          <div class="info">
-            <strong>${item.user}</strong> - 
-            <span class="${item.type === "add" ? "type-add" : "type-remove"}">
-              ${item.type === "add" ? "Əlavə edildi" : "Çıxarıldı"}
-            </span> - 
-            ${item.amount}₼<br>
-            <small>${new Date(item.date.seconds ? item.date.seconds * 1000 : item.date).toLocaleString('tr-TR')}</small>
-            <div class="desc">${item.desc}</div>
-          </div>
-        `;
 
-        if (isAdmin) {
-          const delBtn = document.createElement("button");
-          delBtn.className = "delete-btn";
-          delBtn.textContent = "✖";
-          delBtn.onclick = (e) => {
-            e.stopPropagation();
-            if (confirm("Bu işlemi silmek istediğinize emin misiniz?")) {
-              deleteHistoryFirestore(item.id).then(() => {
-                // Silme sonrası Firestore snapshot ile otomatik güncellenecek
-              });
-            }
-          };
-          div.appendChild(delBtn);
+if (item.type === "medal") {
+  div.classList.add("history-medal");
+  div.innerHTML = `
+    <div class="info">
+      <strong>${item.user}</strong> - 
+      <span class="type-medal">🎉 %${item.amount * 100} hedefe ulaşıldı!</span><br>
+      <small>${new Date(item.date.seconds ? item.date.seconds * 1000 : item.date).toLocaleString('tr-TR')}</small>
+      <div class="desc" style="display:none; margin-top:6px; font-style: italic; color:#ddd;">${item.desc}</div>
+    </div>
+    <button class="delete-btn" title="Sil">×</button>
+  `;
+
+  // Açıklamayı göster/gizle için event ekle:
+  const infoDiv = div.querySelector(".info");
+  const descDiv = div.querySelector(".desc");
+  infoDiv.addEventListener("click", () => {
+    const isShown = descDiv.style.display === "block";
+    descDiv.style.display = isShown ? "none" : "block";
+  });
+}
+ else if (item.type === "add") {
+          div.classList.add("type-add");
+          div.innerHTML = `
+            <div class="info">
+              <strong>${item.user}</strong> - <span class="type-add">+${item.amount}₼</span><br>
+              <small>${new Date(item.date.seconds ? item.date.seconds * 1000 : item.date).toLocaleString('tr-TR')}</small>
+              <div class="desc">${item.desc || ""}</div>
+            </div>
+            <button class="delete-btn" title="Sil">×</button>
+          `;
+        } else if (item.type === "remove") {
+          div.classList.add("type-remove");
+          div.innerHTML = `
+            <div class="info">
+              <strong>${item.user}</strong> - <span class="type-remove">-${item.amount}₼</span><br>
+              <small>${new Date(item.date.seconds ? item.date.seconds * 1000 : item.date).toLocaleString('tr-TR')}</small>
+              <div class="desc">${item.desc || ""}</div>
+            </div>
+            <button class="delete-btn" title="Sil">×</button>
+          `;
         }
 
-        div.onclick = () => div.classList.toggle("show-desc");
-        historyList.appendChild(div);
-      });
-    }
-
-    document.getElementById("clear-history-btn").onclick = () => {
-      if (confirm("Tüm işlem geçmişini silmek istediğinize emin misiniz?")) {
-        clearHistoryFirestore().then(() => {
-          // Temizleme sonrası Firestore snapshot ile otomatik güncellenecek
+        // Açıklamayı göster/gizle
+        div.querySelector(".info").addEventListener("click", () => {
+          div.classList.toggle("show-desc");
         });
-      }
-    };
 
-    function tryLogin() {
-      const passInput = document.getElementById("admin-pass").value.trim();
-      const user = users.find(u => u.pass === passInput);
-      if (user) {
-        isAdmin = true;
-        currentUser = user.name;
-        document.getElementById("admin-login").style.display = "none";
-        document.getElementById("logout-btn").style.display = "inline-block";
-        render();
+        // Silme işlemi sadece admin ve medal olmayan işlemler için aktif
+        const deleteBtn = div.querySelector(".delete-btn");
+        if (deleteBtn) {
+          if (isAdmin) {
+            deleteBtn.style.display = "inline-block";
+            deleteBtn.addEventListener("click", e => {
+              e.stopPropagation();
+              if(confirm("Silmek istediğine emin misin?")) {
+                deleteHistoryFirestore(item.id);
+              }
+            });
+          } else {
+            deleteBtn.style.display = "none";
+          }
+        }
+
+        container.appendChild(div);
+      });
+
+      // "Tümünü Sil" butonunu göster/gizle
+      const clearBtn = document.getElementById("clear-history-btn");
+      if (isAdmin && history.length > 0) {
+        clearBtn.style.display = "inline-block";
       } else {
-        alert("Şifre yanlış!");
+        clearBtn.style.display = "none";
       }
     }
-
-    document.getElementById("admin-btn").onclick = tryLogin;
-    document.getElementById("admin-pass").addEventListener("keydown", e => {
-      if (e.key === "Enter") tryLogin();
-    });
-
-    document.getElementById("logout-btn").onclick = () => {
-      isAdmin = false;
-      currentUser = null;
-      document.getElementById("admin-login").style.display = "flex";
-      document.getElementById("logout-btn").style.display = "none";
-      render();
-    };
 
     function render() {
       renderCards();
       renderHistory();
     }
 
-    // Sayfa yüklendiğinde Firestore'dan gerçek zamanlı dinlemeyi başlat
+    // Admin login/logout
+    const adminPassInput = document.getElementById("admin-pass");
+    const adminBtn = document.getElementById("admin-btn");
+    const logoutBtn = document.getElementById("logout-btn");
+    const clearHistoryBtn = document.getElementById("clear-history-btn");
+
+    // Enter ile giriş için
+    adminPassInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        adminBtn.click();
+      }
+    });
+
+    adminBtn.onclick = () => {
+      const pass = adminPassInput.value.trim();
+      const user = users.find(u => u.pass === pass);
+      if(user) {
+        isAdmin = true;
+        currentUser = user.name;
+        // Uyarı kaldırıldı
+        adminPassInput.value = "";
+        adminPassInput.style.display = "none";
+        adminBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        render();
+      } else {
+        alert("Şifre hatalı!");
+      }
+    };
+
+    logoutBtn.onclick = () => {
+      isAdmin = false;
+      currentUser = null;
+      adminPassInput.style.display = "inline-block";
+      adminBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
+      render();
+    };
+
+    clearHistoryBtn.onclick = () => {
+      if(confirm("Tarihçeyi tamamen silmek istediğine emin misin?")) {
+        clearHistoryFirestore();
+      }
+    };
+
+    // Başlangıçta verileri dinle
     listenHistoryRealtime();
   </script>
 </body>

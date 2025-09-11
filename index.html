@@ -1,468 +1,815 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>YT Panel</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Hedef Takip Sistemi</title>
   <style>
     :root {
-      --bg: #0b0d10;
-      --card: #101418;
-      --muted: #7a8699;
-      --fg: #e9eef5;
-      --accent: #7c5cff;
-      --accent-2: #3ddc97;
-      --danger: #ff5c7a;
-      --border: #1b2129;
-      --shadow: 0 8px 24px rgba(0,0,0,.35);
-      --radius: 16px;
+      --bg-dark: #1B3C53;
+      --bg-medium: #456882;
+      --accent: #D2C1B6;
+      --text-light: #f9f9f9;
     }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
+
     body {
-      margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: radial-gradient(1200px 800px at 80% -10%, rgba(124,92,255,.15), transparent), var(--bg);
-      color: var(--fg);
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-light);
+      margin: 0;
+      padding: 40px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
     }
-    a { color: inherit; text-decoration: none; }
+    #loading-screen {
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #1B3C53, #456882);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.5s ease;
+}
 
-    /* Header */
-    .app-header {
-      position: sticky; top: 0; z-index: 50;
-      backdrop-filter: saturate(140%) blur(8px);
-      background: rgba(11,13,16,.6);
-      border-bottom: 1px solid var(--border);
+#loading-screen .loader-text {
+  color: #fff; /* Beyaz yapalım */
+  font-weight: bold;
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.4); /* Hafif gölge ile netlik */
+  font-size: 1.8rem;
+  margin-bottom: 24px;
+  animation: fadeInText 1.2s infinite alternate;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 6px solid rgba(255, 255, 255, 0.2); /* Daha silik dış hat */
+  border-top: 6px solid #fff; /* Parlak dönen çizgi */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.3); /* Hafif dış parlama */
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeInText {
+  from { opacity: 0.5; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1.05); }
+}
+
+    h1 {
+      font-size: 2.8rem;
+      margin-bottom: 40px;
+      color: var(--accent);
+      text-align: center;
+      width: 100%;
+      animation: scaleIn 0.8s ease;
     }
-    .header-inner {
-      max-width: 1200px; margin: 0 auto; padding: 14px 20px;
-      display: flex; align-items: center; gap: 16px; justify-content: space-between;
+
+    #main-container {
+      display: flex;
+      gap: 40px;
+      width: 100%;
+      max-width: 1200px;
+      box-sizing: border-box;
     }
-    .brand { display: flex; gap: 10px; align-items: center; font-weight: 700; letter-spacing: .2px; }
-    .brand-badge { width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), #9d7bff); box-shadow: var(--shadow); display: grid; place-items: center; font-size: 14px; }
-    .header-actions { display: flex; gap: 10px; align-items: center; }
-    .btn, button {
-      display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border);
-      background: linear-gradient(180deg, #141921, #0f141a); color: var(--fg);
-      padding: 10px 14px; border-radius: 12px; cursor: pointer; font-weight: 600;
-      transition: transform .04s ease, border-color .2s ease, background .2s ease;
+
+    #cards {
+      flex: 1;
+      max-width: 600px;
     }
-    .btn:hover { border-color: #2a3340; }
-    .btn:active { transform: translateY(1px); }
-    .btn-primary { background: linear-gradient(180deg, #7c5cff, #6b4aff); border-color: #6b4aff; }
 
-    /* Container */
-    .container { max-width: 1200px; margin: 28px auto 100px; padding: 0 20px; }
-
-    /* Section */
-    .section {
-      margin-bottom: 34px; position: relative;
-    }
-    .section h2 { margin: 0 0 12px; font-size: 20px; letter-spacing: .2px; }
-    .section .hint { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
-
-    /* Grids */
-    .grid { display: grid; grid-template-columns: repeat( auto-fill, minmax(260px, 1fr) ); gap: 14px; }
-
-    /* Cards */
     .card {
-      background: linear-gradient(180deg, #11161d, #0d1217);
-      border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
-      padding: 14px; display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center;
-      position: relative; overflow: hidden;
-    }
-    .card .logo { width: 56px; height: 56px; border-radius: 50%; background: #0b0f14; display: grid; place-items: center; overflow: hidden; border: 1px solid #1d2530; }
-    .card .meta { min-width: 0; }
-    .card .name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card .subs { color: var(--muted); font-size: 13px; margin-top: 3px; }
-    .card .go { font-size: 13px; opacity: .9; }
-
-    /* Remove button (admin modunda görünür) */
-    .remove-btn {
-      position: absolute; top: 8px; right: 8px; padding: 6px 8px; border-radius: 10px;
-      background: rgba(255,92,122,.1); border: 1px solid rgba(255,92,122,.35); color: #ff99aa;
-      font-weight: 700; display: none; cursor: pointer; font-size: 12px;
+      background: var(--bg-medium);
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin: 16px 0;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      transition: transform 0.3s, box-shadow 0.3s;
+      animation: fadeInUp 0.6s ease both;
+      position: relative;
     }
 
-    /* Add panels (admin) */
-    .add-panel { display: none; margin: 10px 0 16px; gap: 8px; }
-    .add-panel input[type="url"], .add-panel input[type="text"] { flex: 1; min-width: 0; background: #0c1116; color: var(--fg); border: 1px solid var(--border); padding: 10px 12px; border-radius: 10px; }
-    .add-panel .btn { white-space: nowrap; }
+    .card:hover {
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+      cursor: pointer;
+    }
 
-    /* Floating admin toggle (başta gizli) */
-    .admin-toggle { position: fixed; right: 18px; bottom: 18px; display: none; z-index: 60; }
+    .progress {
+      height: 22px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 12px;
+      position: relative;
+    }
 
-    /* Settings modal (API anahtarı vs.) */
-    .modal { position: fixed; inset: 0; display: none; place-items: center; backdrop-filter: blur(8px); background: rgba(0,0,0,.45); z-index: 80; }
-    .modal .box { width: 560px; max-width: calc(100% - 24px); background: #0e1319; border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); padding: 18px; }
-    .modal .box h3 { margin: 0 0 6px; }
-    .form-row { display: flex; gap: 8px; margin-top: 10px; }
-    .form-row input { flex: 1; background: #0c1116; color: var(--fg); border: 1px solid var(--border); padding: 10px 12px; border-radius: 10px; }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(270deg, #D2C1B6, #F0E9E1, #D2C1B6);
+      background-size: 600% 600%;
+      animation: gradientShift 5s ease infinite;
+      border-radius: 12px 0 0 12px;
+      transition: width 1s ease-in-out;
+      will-change: width, background-position;
+    }
 
-    /* Section placeholders for DM ve büyüme sıralaması */
-    .placeholder { border: 1px dashed #223; border-radius: var(--radius); padding: 18px; color: var(--muted); text-align: center; }
+    input, button {
+      padding: 12px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      box-sizing: border-box;
+      transition: all 0.3s ease;
+    }
 
-    /* Admin mod aktifken */
-    .admin .remove-btn { display: inline-flex; }
-    .admin .add-panel { display: flex; }
-    .admin .admin-toggle { display: inline-flex; }
+    input {
+      flex: 1;
+      margin-right: 12px;
+    }
 
-    /* Helper badges */
-    .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+    button {
+      background-color: var(--accent);
+      color: var(--bg-dark);
+      cursor: pointer;
+      font-weight: 700;
+    }
 
-    @media (max-width: 600px) {
-      .card { grid-template-columns: 48px 1fr auto; }
-      .card .logo { width: 48px; height: 48px; }
+    button:hover {
+      background-color: #bdaea2;
+    }
+
+    .btn-red {
+      background-color: #ff5e57;
+    }
+
+    .btn-red:hover {
+      background-color: #e0483d;
+    }
+
+    #admin-login {
+      margin-top: 32px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: nowrap;
+      justify-content: center;
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+    }
+
+    #admin-login input {
+      flex: 1;
+      margin: 0;
+      padding: 12px 14px;
+      font-size: 16px;
+      border-radius: 10px 0 0 10px;
+    }
+
+    #admin-login button {
+      padding: 12px 20px;
+      border-radius: 0 10px 10px 0;
+      font-size: 16px;
+      flex: 0 0 auto;
+    }
+
+    #logout-btn {
+      margin-top: 32px;
+      background-color: #ff5e57;
+      color: white;
+      font-weight: 700;
+      padding: 12px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: none;
+      width: 120px;
+      align-self: center;
+      transition: background-color 0.3s;
+    }
+
+    #logout-btn:hover {
+      background-color: #e0483d;
+    }
+
+    .footer {
+      margin-top: 60px;
+      font-size: 13px;
+      color: #bbb;
+      text-align: center;
+      max-width: 700px;
+    }
+
+    #history {
+      flex: 0.8;
+      background: var(--bg-medium);
+      border-radius: 16px;
+      padding: 24px 28px;
+      max-height: 480px;
+      overflow-y: auto;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      font-size: 14px;
+      position: relative;
+    }
+
+    #history h3 {
+      margin-top: 0;
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #clear-history-btn {
+      background-color: #ff5e57;
+      border: none;
+      color: white;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      user-select: none;
+      transition: background-color 0.3s;
+      display: none;
+    }
+
+    #clear-history-btn:hover {
+      background-color: #e0483d;
+    }
+
+    .history-item {
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      position: relative;
+      transition: background-color 0.3s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      animation: fadeInUp 0.4s ease both;
+    }
+
+    .history-item:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .history-item .desc {
+      display: none;
+      margin-top: 6px;
+      font-style: italic;
+      color: #ddd;
+      width: 100%;
+      padding-top: 4px;
+    }
+
+    .history-item.show-desc .desc {
+      display: block;
+    }
+
+    .history-item .info {
+      flex: 1;
+    }
+
+    .history-item .type-add {
+      color: #7edd7e;
+      font-weight: 700;
+    }
+
+    .history-item .type-remove {
+      color: #ff7f7f;
+      font-weight: 700;
+    }
+
+    .history-item button.delete-btn {
+      background: transparent;
+      border: none;
+      color: #ff5e57;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 16px;
+      margin-left: 12px;
+      user-select: none;
+      transition: color 0.3s;
+      flex-shrink: 0;
+      display: none; /* Başlangıçta görünmez, admin girince gösterilecek */
+    }
+
+    .history-item button.delete-btn:hover {
+      color: #e0483d;
+    }
+
+    .admin-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .admin-actions input[type=number],
+    .admin-actions input[type=text] {
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 16px;
+    }
+
+    .admin-actions input[type=number] {
+      width: 100px;
+    }
+
+    .admin-actions input[type=text] {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .admin-actions button {
+      flex: 0 0 auto;
+      min-width: 90px;
+    }
+
+    .medals-container {
+      margin-left: 12px;
+      font-size: 1.4rem;
+      user-select: none;
+    }
+
+    .medal {
+      margin-left: 6px;
+      user-select: none;
+    }
+
+    .history-medal {
+      background: linear-gradient(90deg, #f9d423, #ff4e50);
+      color: black;
+      font-weight: 700;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      animation: medalBurst 1s ease forwards;
+      box-shadow: 0 0 8px 3px gold;
+      position: relative;
+      overflow: visible;
+      position: relative;
+    }
+
+    .type-medal {
+      font-size: 1.1rem;
+      display: inline-block;
+    }
+
+    @keyframes medalBurst {
+      0% {
+        transform: scale(0.8);
+        opacity: 0;
+        filter: drop-shadow(0 0 0 transparent);
+      }
+      50% {
+        transform: scale(1.1);
+        opacity: 1;
+        filter: drop-shadow(0 0 12px gold);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+        filter: drop-shadow(0 0 6px gold);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes scaleIn {
+      from {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @media (max-width: 900px) {
+      #main-container {
+        flex-direction: column;
+      }
+      #history {
+        max-height: 300px;
+        margin-top: 30px;
+      }
+      #cards {
+        max-width: 100%;
+      }
+      body {
+        padding: 30px 15px;
+      }
+      input, button {
+        font-size: 14px;
+        padding: 10px 14px;
+      }
+      .admin-actions {
+        flex-direction: column;
+      }
+      .admin-actions input[type=number], .admin-actions input[type=text], .admin-actions button {
+        width: 100%;
+        min-width: unset;
+      }
+      #admin-login {
+        max-width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-  <header class="app-header">
-    <div class="header-inner">
-      <div class="brand">
-        <div class="brand-badge">YT</div>
-        <div>YT Yönetim Paneli</div>
-        <span class="badge" title="Admin modunu aç/kapat: Alt+M">Beta</span>
-      </div>
-      <div class="header-actions">
-        <button id="openSettings" class="btn" title="Ayarlar (API anahtarı)">⚙️ Ayarlar</button>
-        <button id="toggleAdmin" class="btn" title="Admin modunu aç/kapat (Alt+M)">🛠️ Admin</button>
-      </div>
-    </div>
-  </header>
+  <div id="loading-screen">
+  <div class="loader-text">🎯 Hedef Yükleniyor...</div>
+  <div class="spinner"></div>
+</div>
+  <h1>💸 Hedef Takip Sistemi</h1>
 
-  <main class="container" id="app">
-
-    <!-- UYARI: API anahtarı eksikse -->
-    <div id="apiWarning" class="section" style="display:none">
-      <div class="placeholder">
-        <strong>YouTube API anahtarı gerekli.</strong><br>
-        Canlı abone sayısını ve kanal bilgisini çekmek için <em>YOUTUBE_API_KEY</em> girin. Sağ üstten <b>Ayarlar</b>'a tıklayın.
-      </div>
-    </div>
-
-    <!-- Benim Kanallarım -->
-    <section class="section" id="mine">
-      <h2>Benim Kanallarım</h2>
-      <div class="hint">Karta tıklayınca kanal sayfası açılır. Ekleme/çıkarma için Admin modunu açın.</div>
-
-      <div class="add-panel" id="addMine">
-        <input id="mineUrl" type="url" placeholder="Kanal linkini yapıştır (ör: https://www.youtube.com/@kanal)" />
-        <button class="btn btn-primary" id="addMineBtn">Ekle</button>
-      </div>
-
-      <div class="grid" id="mineGrid"></div>
-    </section>
-
-    <!-- Rakip Kanallar -->
-    <section class="section" id="competitors">
-      <h2>Rakip Kanallar</h2>
-      <div class="hint">Aynı kart yapısı, sadece kategori farklı.</div>
-
-      <div class="add-panel" id="addCompetitor">
-        <input id="compUrl" type="url" placeholder="Rakip kanal linkini yapıştır" />
-        <button class="btn btn-primary" id="addCompBtn">Ekle</button>
-      </div>
-
-      <div class="grid" id="compGrid"></div>
-    </section>
-
-    <!-- DM ve büyüme sıralaması yer tutucu -->
-    <section class="section">
-      <h2>DM Kutusu (placeholder)</h2>
-      <div class="placeholder">UI resmine göre burada DM bileşeni gelecek. Şimdilik işlevsizlik istenmişti, sadece yer tutucu bırakıldı.</div>
-    </section>
-
-    <section class="section">
-      <h2>Büyüme Sıralaması (placeholder)</h2>
-      <div class="placeholder">Grafikler / tablo vs. daha sonra eklenecek. Şimdilik yer tutucu.</div>
-    </section>
-
-  </main>
-
-  <!-- Admin toggle floating (gerekirse) -->
-  <button class="btn admin-toggle" id="adminFab">Admin</button>
-
-  <!-- Ayarlar Modal -->
-  <div class="modal" id="settingsModal" aria-hidden="true">
-    <div class="box">
-      <h3>🧩 Ayarlar</h3>
-      <div style="color:var(--muted); font-size:13px">YouTube canlı abone sayısı için API anahtarı gerekir. Anahtar tarayıcıda <code>localStorage</code>'da tutulur. Açık kaynak yayınlarken yeni bir anahtar kullanmanız önerilir.</div>
-      <div class="form-row">
-        <input id="apiKeyInput" type="text" placeholder="YouTube API Key (v3)" />
-        <button class="btn btn-primary" id="saveApiKey">Kaydet</button>
-      </div>
+  <div id="main-container">
+    <div id="cards"></div>
+    <div id="history">
+      <h3>
+        📜 İşlem Tarihçesi
+        <button id="clear-history-btn" title="Tümünü Sil">Tümünü Sil</button>
+      </h3>
+      <div id="history-list"></div>
     </div>
   </div>
 
-  <!-- Firebase SDK ve app init (KULLANICININ VERDİĞİ) -->
-  <script type="module">
-    // Firebase core
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+  <div id="admin-login">
+    <input type="password" id="admin-pass" placeholder="Şifrə" />
+    <button id="admin-btn">Giriş</button>
+  </div>
 
-    // Kullanıcının verdiği config
+  <button id="logout-btn">Çıxış</button>
+  <div class="footer">© 2025 Hedef Takip Sistemi</div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    let firstLoad = true;
     const firebaseConfig = {
-      apiKey: "AIzaSyBy7DShn5TQQMEyPitUZ-9A-o6u0EgD08o",
-      authDomain: "yt-sayt.firebaseapp.com",
-      projectId: "yt-sayt",
-      storageBucket: "yt-sayt.firebasestorage.app",
-      messagingSenderId: "614904562607",
-      appId: "1:614904562607:web:f352a57fe3f4457077e55a"
+      apiKey: "AIzaSyCaNltiGwH5APPJYYul7UmFrCplNYIZmhM",
+      authDomain: "hedef-takip-1395c.firebaseapp.com",
+      projectId: "hedef-takip-1395c",
+      storageBucket: "hedef-takip-1395c.firebasestorage.app",
+      messagingSenderId: "798761628344",
+      appId: "1:798761628344:web:c3118580d598c3efbbba4d",
+      measurementId: "G-J2E4223Q3M"
     };
 
-    // Firebase başlat
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    // DOM referansları
-    const mineGrid = document.getElementById('mineGrid');
-    const compGrid = document.getElementById('compGrid');
-    const addMineBtn = document.getElementById('addMineBtn');
-    const addCompBtn = document.getElementById('addCompBtn');
-    const mineUrl = document.getElementById('mineUrl');
-    const compUrl = document.getElementById('compUrl');
+    const users = [
+      { name: "Sadiq", goal: 8000, pass: "sadiq123" },
+      { name: "Cavid", goal: 10000, pass: "cavid123" }
+    ];
 
-    const settingsModal = document.getElementById('settingsModal');
-    const openSettings = document.getElementById('openSettings');
-    const saveApiKey = document.getElementById('saveApiKey');
-    const apiKeyInput = document.getElementById('apiKeyInput');
-    const toggleAdminBtn = document.getElementById('toggleAdmin');
-    const adminFab = document.getElementById('adminFab');
-    const apiWarning = document.getElementById('apiWarning');
-
-    // LocalStorage anahtar yönetimi
-    const API_KEY_STORAGE = 'YOUTUBE_API_KEY';
-    function getApiKey() { return localStorage.getItem(API_KEY_STORAGE) || ''; }
-    function setApiKey(v) { localStorage.setItem(API_KEY_STORAGE, v || ''); updateApiWarning(); }
-
-    // Admin modu (başta kapalı)
+    let history = [];
     let isAdmin = false;
-    function toggleAdmin(force) {
-      isAdmin = typeof force === 'boolean' ? force : !isAdmin;
-      document.body.classList.toggle('admin', isAdmin);
+    let currentUser = null;
+
+    let unsubscribeHistory = null;
+    function listenHistoryRealtime() {
+      if (unsubscribeHistory) unsubscribeHistory();
+      unsubscribeHistory = db.collection("history")
+        .orderBy("date", "desc")
+        .onSnapshot(snapshot => {
+          history = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+              if (firstLoad) {
+        const loader = document.getElementById("loading-screen");
+        loader.style.opacity = "0";
+        setTimeout(() => loader.style.display = "none", 500);
+        firstLoad = false;
+      }
+          render();
+        });
     }
 
-    // Modal helpers
-    function openModal() { settingsModal.style.display = 'grid'; settingsModal.setAttribute('aria-hidden', 'false'); apiKeyInput.value = getApiKey(); apiKeyInput.focus(); }
-    function closeModal() { settingsModal.style.display = 'none'; settingsModal.setAttribute('aria-hidden', 'true'); }
-
-    openSettings.addEventListener('click', openModal);
-    settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeModal(); });
-    saveApiKey.addEventListener('click', () => { setApiKey(apiKeyInput.value.trim()); closeModal(); });
-
-    // Admin UI
-    toggleAdminBtn.addEventListener('click', () => toggleAdmin());
-    adminFab.addEventListener('click', () => toggleAdmin());
-    window.addEventListener('keydown', (e) => { if (e.altKey && (e.key === 'm' || e.key === 'M')) toggleAdmin(); });
-
-    // Uyarı: API anahtarı yoksa bilgi göster
-    function updateApiWarning() {
-      const hasKey = !!getApiKey();
-      apiWarning.style.display = hasKey ? 'none' : 'block';
-    }
-    updateApiWarning();
-
-    // Yardımcılar
-    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-    function formatSubs(n) {
-      n = Number(n || 0);
-      if (n >= 1_000_000_000) return (n/1_000_000_000).toFixed(2).replace(/\.00$/, '') + 'B';
-      if (n >= 1_000_000) return (n/1_000_000).toFixed(2).replace(/\.00$/, '') + 'M';
-      if (n >= 1_000) return (n/1_000).toFixed(1).replace(/\.0$/, '') + 'K';
-      return String(n);
+    function getCurrentAmount(userName) {
+      return history.filter(h => h.user === userName)
+        .reduce((acc, cur) => {
+          if(cur.type === "add") return acc + cur.amount;
+          else if(cur.type === "remove") return acc - cur.amount;
+          else return acc;
+        }, 0);
     }
 
-    // Kanal linkinden ID/handle çöz (yalnızca link alıyoruz)
-    function parseChannelFromUrl(url) {
-      try {
-        const u = new URL(url);
-        // /channel/UCxxxx
-        const mId = u.pathname.match(/\/channel\/(UC[0-9A-Za-z_-]{22,})/);
-        if (mId) return { type: 'id', value: mId[1] };
-        // /@handle veya https://www.youtube.com/@handle
-        const mHandle = u.pathname.match(/\/@([A-Za-z0-9._-]{2,})/);
-        if (mHandle) return { type: 'handle', value: '@' + mHandle[1] };
-        // /c/CustomName (legacy custom URL)
-        const mUser = u.pathname.match(/\/c\/([A-Za-z0-9._-]{2,})/);
-        if (mUser) return { type: 'username', value: mUser[1] };
-        // Son çare: tüm URL'i aramada kullan
-        return { type: 'search', value: url };
-      } catch (e) {
-        // direkt @handle gelmiş olabilir
-        if (url.startsWith('@')) return { type: 'handle', value: url };
-        return { type: 'search', value: url };
+    async function checkAndAddMedals(user) {
+  const current = getCurrentAmount(user.name);
+  const goal = user.goal;
+  const medals = [0.25, 0.5, 0.75, 1];
+
+  const mesajlar = {
+    0.25: "İlk addımı atdın! Davam et, uğur yaxınlaşır. 🥉",
+    0.5: "Yolun yarısını keçdin! Qətiyyətin təqdirəlayiqdir. 🥈",
+    0.75: "Son düzlükdəsən! Az qalıb, əzmindən dönmə! 🥇",
+    1: "Möhtəşəm iş! Məqsədinə tam çatdın! 🎯🏆"
+  };
+
+  for (const threshold of medals) {
+    if (current >= goal * threshold) {
+      const medalExists = history.some(
+        h => h.user === user.name && h.type === "medal" && h.amount === threshold
+      );
+      if (!medalExists) {
+        await saveHistoryFirestore({
+          user: user.name,
+          type: "medal",
+          amount: threshold,
+          desc: mesajlar[threshold] || "Təbriklər, medal qazandın!",
+          date: new Date()
+        });
       }
     }
+  }
+}  // <-- İşte buraya eksik olan kapanış parantezi
 
-    // YouTube API istekleri
-    async function ytFetch(endpoint, params) {
-      const apiKey = getApiKey();
-      if (!apiKey) throw new Error('API key missing');
-      const q = new URLSearchParams({ key: apiKey, ...params });
-      const url = `https://www.googleapis.com/youtube/v3/${endpoint}?${q.toString()}`;
-      const res = await fetch(url);
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`YouTube API hatası: ${res.status} ${txt}`);
-      }
-      return res.json();
+
+
+
+    function saveHistoryFirestore(entry) {
+      return db.collection("history").add(entry);
     }
 
-    async function resolveChannelId(inputUrl) {
-      const p = parseChannelFromUrl(inputUrl);
-      if (p.type === 'id') return p.value;
-      if (p.type === 'handle') {
-        // channels.list(forHandle=)
-        const j = await ytFetch('channels', { part: 'id', forHandle: p.value });
-        if (j.items && j.items[0]) return j.items[0].id;
-      }
-      if (p.type === 'username') {
-        const j = await ytFetch('channels', { part: 'id', forUsername: p.value });
-        if (j.items && j.items[0]) return j.items[0].id;
-      }
-      // Fallback: search
-      const j = await ytFetch('search', { part: 'snippet', q: p.value, type: 'channel', maxResults: 1 });
-      if (j.items && j.items[0] && j.items[0].snippet && j.items[0].snippet.channelId) return j.items[0].snippet.channelId;
-      throw new Error('Kanal bulunamadı. Lütfen geçerli bir kanal linki verin.');
+    function deleteHistoryFirestore(id) {
+      return db.collection("history").doc(id).delete();
     }
 
-    async function fetchChannelInfo(channelId) {
-      const j = await ytFetch('channels', { part: 'snippet,statistics', id: channelId });
-      const it = j.items && j.items[0];
-      if (!it) throw new Error('Kanal bilgisi alınamadı.');
-      const { title, thumbnails, customUrl } = it.snippet;
-      const logo = (thumbnails && (thumbnails.high?.url || thumbnails.default?.url)) || '';
-      const subs = it.statistics?.subscriberCount ?? null; // bazı kanallarda gizli olabilir
-      return { channelId, title, logo, subscribers: subs ? Number(subs) : null, url: customUrl ? `https://www.youtube.com/${customUrl}` : `https://www.youtube.com/channel/${channelId}` };
+    function clearHistoryFirestore() {
+      const batch = db.batch();
+      history.forEach(item => {
+        const docRef = db.collection("history").doc(item.id);
+        batch.delete(docRef);
+      });
+      return batch.commit();
     }
 
-    // Firestore koleksiyon yolları
-    const colMine = collection(db, 'myChannels');
-    const colComp = collection(db, 'competitors');
+    function renderCards() {
+      const container = document.getElementById("cards");
+      container.innerHTML = "";
 
-    // Doc id olarak channelId kullan (idempotent)
-    async function addChannel(colRef, inputUrl) {
-      const channelId = await resolveChannelId(inputUrl);
-      const info = await fetchChannelInfo(channelId);
-      await setDoc(doc(colRef, channelId), {
-        url: info.url,
-        channelId,
-        title: info.title,
-        logo: info.logo,
-        subscribersCache: info.subscribers,
-        createdAt: serverTimestamp(),
-      }, { merge: true });
-      return info;
-    }
+      users.forEach(user => {
+        checkAndAddMedals(user).catch(console.error);
 
-    async function removeChannel(colRef, channelId) {
-      await deleteDoc(doc(colRef, channelId));
-    }
+        const current = getCurrentAmount(user.name);
+        const safeCurrent = current < 0 ? 0 : current;
+        const percent = Math.min((safeCurrent / user.goal) * 100, 100).toFixed(1);
 
-    // UI render
-    function channelCardHTML(data, category) {
-      const subsText = data.subscribersLive != null ? formatSubs(data.subscribersLive) : (data.subscribersCache != null ? formatSubs(data.subscribersCache) + ' (cache)' : 'Gizli');
-      return `
-        <div class="card" data-id="${data.channelId}" data-cat="${category}">
-          <div class="logo"><img src="${data.logo || ''}" alt="logo" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"/></div>
-          <div class="meta">
-            <div class="name" title="${data.title || ''}">${data.title || '—'}</div>
-            <div class="subs">Abone: <span>${subsText}</span></div>
+        const userMedals = history.filter(h => h.user === user.name && h.type === "medal").map(m => m.amount);
+        const medalIcons = {
+          0.25: "🥉",
+          0.5: "🥈",
+          0.75: "🥇",
+          1: "🏆"
+        };
+
+        const medalsHTML = userMedals.map(m => `<span class="medal">${medalIcons[m] || "🎖️"}</span>`).join(" ");
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+          <h2>${user.name} - Hedef: ${user.goal}₼ <span class="medals-container">${medalsHTML}</span></h2>
+          <div class="progress">
+            <div class="progress-bar" style="width: ${percent}%;"></div>
           </div>
-          <div class="go"><a href="${data.url}" target="_blank" rel="noopener">↗︎ Aç</a></div>
-          <button class="remove-btn" title="Sil">Sil</button>
-        </div>`;
-    }
+          <p>Toplam: ${safeCurrent}₼ (${percent}%)</p>
+        `;
 
-    function bindCardEvents(rootEl, colRef) {
-      rootEl.querySelectorAll('.card .remove-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          const card = e.target.closest('.card');
-          const id = card?.dataset.id; if (!id) return;
-          if (!confirm('Kanalı silmek istediğine emin misin?')) return;
-          await removeChannel(colRef, id);
-        });
-      });
-      rootEl.querySelectorAll('.card').forEach(card => {
-        card.addEventListener('click', (e) => {
-          // linke zaten tıklanırsa yeni sekme açılıyor; kart tıklaması da açsın
-          const url = card.querySelector('a')?.href; if (url) window.open(url, '_blank');
-        });
-      });
-    }
+        if (isAdmin && currentUser === user.name) {
+          const inputAmount = document.createElement("input");
+          inputAmount.placeholder = "Məbləğ";
+          inputAmount.type = "number";
+          inputAmount.min = "0";
 
-    // Canlı veri çek ve kartları güncelle
-    async function refreshLiveStats(container) {
-      // tüm kartlardaki id'leri topla
-      const ids = Array.from(container.querySelectorAll('.card')).map(c => c.dataset.id).filter(Boolean);
-      const apiKey = getApiKey(); if (!apiKey || ids.length === 0) return;
-      // 50 id sınırı -> parça parça
-      for (let i = 0; i < ids.length; i += 50) {
-        const slice = ids.slice(i, i+50);
-        try {
-          const j = await ytFetch('channels', { part: 'statistics', id: slice.join(',') });
-          const map = new Map((j.items||[]).map(it => [it.id, Number(it.statistics?.subscriberCount ?? NaN)]));
-          slice.forEach(id => {
-            const card = container.querySelector(`.card[data-id="${id}"]`);
-            const subs = map.get(id);
-            if (card && isFinite(subs)) {
-              const span = card.querySelector('.subs span');
-              if (span) span.textContent = formatSubs(subs);
-            }
-          });
-        } catch (err) {
-          console.warn('Canlı istatistik çekilemedi:', err);
+          const inputDesc = document.createElement("input");
+          inputDesc.placeholder = "Açıklama (zorunlu)";
+          inputDesc.type = "text";
+
+          const btnAdd = document.createElement("button");
+          btnAdd.innerText = "Əlavə et";
+
+          btnAdd.onclick = () => {
+            const val = parseFloat(inputAmount.value);
+            const desc = inputDesc.value.trim();
+            if (!desc) return alert("Lütfen açıklama giriniz!");
+            if (!isNaN(val) && val > 0) {
+              saveHistoryFirestore({
+                user: user.name,
+                type: "add",
+                amount: val,
+                desc,
+                date: new Date()
+              }).then(() => {
+                inputAmount.value = "";
+                inputDesc.value = "";
+              });
+            } else alert("Geçerli bir miktar giriniz!");
+          };
+
+          const btnRemove = document.createElement("button");
+          btnRemove.innerText = "Çıxart";
+          btnRemove.className = "btn-red";
+
+          btnRemove.onclick = () => {
+            const val = parseFloat(inputAmount.value);
+            const desc = inputDesc.value.trim();
+            if (!desc) return alert("Lütfen açıklama giriniz!");
+            if (!isNaN(val) && val > 0) {
+              saveHistoryFirestore({
+                user: user.name,
+                type: "remove",
+                amount: val,
+                desc,
+                date: new Date()
+              }).then(() => {
+                inputAmount.value = "";
+                inputDesc.value = "";
+              });
+            } else alert("Geçerli bir miktar giriniz!");
+          };
+
+          const adminDiv = document.createElement("div");
+          adminDiv.className = "admin-actions";
+          adminDiv.appendChild(inputAmount);
+          adminDiv.appendChild(inputDesc);
+          adminDiv.appendChild(btnAdd);
+          adminDiv.appendChild(btnRemove);
+
+          card.appendChild(adminDiv);
         }
-        await sleep(350);
+
+        container.appendChild(card);
+      });
+    }
+
+    function renderHistory() {
+      const container = document.getElementById("history-list");
+      container.innerHTML = "";
+
+      history.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+
+if (item.type === "medal") {
+  div.classList.add("history-medal");
+  div.innerHTML = `
+    <div class="info">
+      <strong>${item.user}</strong> - 
+      <span class="type-medal">🎉 %${item.amount * 100} hedefe ulaşıldı!</span><br>
+      <small>${new Date(item.date.seconds ? item.date.seconds * 1000 : item.date).toLocaleString('tr-TR')}</small>
+      <div class="desc" style="display:none; margin-top:6px; font-style: italic; color:#ddd;">${item.desc}</div>
+    </div>
+    <button class="delete-btn" title="Sil">×</button>
+  `;
+
+  // Açıklamayı göster/gizle için event ekle:
+  const infoDiv = div.querySelector(".info");
+  const descDiv = div.querySelector(".desc");
+  infoDiv.addEventListener("click", () => {
+    const isShown = descDiv.style.display === "block";
+    descDiv.style.display = isShown ? "none" : "block";
+  });
+}
+ else if (item.type === "add") {
+          div.classList.add("type-add");
+          div.innerHTML = `
+            <div class="info">
+              <strong>${item.user}</strong> - <span class="type-add">+${item.amount}₼</span><br>
+              <small>${new Date(item.date.seconds ? item.date.seconds * 1000 : item.date).toLocaleString('tr-TR')}</small>
+              <div class="desc">${item.desc || ""}</div>
+            </div>
+            <button class="delete-btn" title="Sil">×</button>
+          `;
+        } else if (item.type === "remove") {
+          div.classList.add("type-remove");
+          div.innerHTML = `
+            <div class="info">
+              <strong>${item.user}</strong> - <span class="type-remove">-${item.amount}₼</span><br>
+              <small>${new Date(item.date.seconds ? item.date.seconds * 1000 : item.date).toLocaleString('tr-TR')}</small>
+              <div class="desc">${item.desc || ""}</div>
+            </div>
+            <button class="delete-btn" title="Sil">×</button>
+          `;
+        }
+
+        // Açıklamayı göster/gizle
+        div.querySelector(".info").addEventListener("click", () => {
+          div.classList.toggle("show-desc");
+        });
+
+        // Silme işlemi sadece admin ve medal olmayan işlemler için aktif
+        const deleteBtn = div.querySelector(".delete-btn");
+        if (deleteBtn) {
+          if (isAdmin) {
+            deleteBtn.style.display = "inline-block";
+            deleteBtn.addEventListener("click", e => {
+              e.stopPropagation();
+              if(confirm("Silmek istediğine emin misin?")) {
+                deleteHistoryFirestore(item.id);
+              }
+            });
+          } else {
+            deleteBtn.style.display = "none";
+          }
+        }
+
+        container.appendChild(div);
+      });
+
+      // "Tümünü Sil" butonunu göster/gizle
+      const clearBtn = document.getElementById("clear-history-btn");
+      if (isAdmin && history.length > 0) {
+        clearBtn.style.display = "inline-block";
+      } else {
+        clearBtn.style.display = "none";
       }
     }
 
-    // Snapshot dinlemeleri
-    onSnapshot(colMine, async (snap) => {
-      mineGrid.innerHTML = '';
-      snap.forEach(docu => {
-        const d = docu.data();
-        const html = channelCardHTML({ ...d, subscribersLive: null }, 'mine');
-        mineGrid.insertAdjacentHTML('beforeend', html);
-      });
-      bindCardEvents(mineGrid, colMine);
-      refreshLiveStats(mineGrid);
-    });
-
-    onSnapshot(colComp, async (snap) => {
-      compGrid.innerHTML = '';
-      snap.forEach(docu => {
-        const d = docu.data();
-        const html = channelCardHTML({ ...d, subscribersLive: null }, 'comp');
-        compGrid.insertAdjacentHTML('beforeend', html);
-      });
-      bindCardEvents(compGrid, colComp);
-      refreshLiveStats(compGrid);
-    });
-
-    // Ekleme butonları
-    async function handleAdd(colRef, inputEl) {
-      const url = inputEl.value.trim(); if (!url) return alert('Link gir');
-      try {
-        const info = await addChannel(colRef, url);
-        inputEl.value = '';
-      } catch (e) {
-        alert(e.message || 'Hata');
-      }
+    function render() {
+      renderCards();
+      renderHistory();
     }
-    addMineBtn.addEventListener('click', () => handleAdd(colMine, mineUrl));
-    addCompBtn.addEventListener('click', () => handleAdd(colComp, compUrl));
-    mineUrl.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAdd(colMine, mineUrl); });
-    compUrl.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAdd(colComp, compUrl); });
 
-    // İlk açılış: admin gizli olsun; FAB gösterelim (isteğe bağlı)
-    document.body.classList.remove('admin');
-    adminFab.style.display = 'inline-flex';
+    // Admin login/logout
+    const adminPassInput = document.getElementById("admin-pass");
+    const adminBtn = document.getElementById("admin-btn");
+    const logoutBtn = document.getElementById("logout-btn");
+    const clearHistoryBtn = document.getElementById("clear-history-btn");
+
+    // Enter ile giriş için
+    adminPassInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        adminBtn.click();
+      }
+    });
+
+    adminBtn.onclick = () => {
+      const pass = adminPassInput.value.trim();
+      const user = users.find(u => u.pass === pass);
+      if(user) {
+        isAdmin = true;
+        currentUser = user.name;
+        // Uyarı kaldırıldı
+        adminPassInput.value = "";
+        adminPassInput.style.display = "none";
+        adminBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        render();
+      } else {
+        alert("Şifre hatalı!");
+      }
+    };
+
+    logoutBtn.onclick = () => {
+      isAdmin = false;
+      currentUser = null;
+      adminPassInput.style.display = "inline-block";
+      adminBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
+      render();
+    };
+
+    clearHistoryBtn.onclick = () => {
+      if(confirm("Tarihçeyi tamamen silmek istediğine emin misin?")) {
+        clearHistoryFirestore();
+      }
+    };
+
+    // Başlangıçta verileri dinle
+    listenHistoryRealtime();
   </script>
 </body>
 </html>
